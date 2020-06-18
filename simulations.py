@@ -9,22 +9,63 @@ Simulate RNA-seq data for SPADA lab research.
 """
 
 import numpy as np
-import statistics as stats
-from sklearn.preprocessing import normalize
 
 
-def bulk(N, M, K, depth, alpha, A=None):
+eps = 1e-6
+
+
+def categorical(p):
+    """
+    A categorical random variable.
+
+    Parameters
+    ----------
+    p : sequence of nonnegative floats, sum(p) = 1
+        p[i] is the probability of returning i.
+
+    Returns
+    -------
+    A single sample from categorical distribution.
+    """
+    counts = np.random.multinomial(1, p)
+    return list(counts).index(1)
+    
+
+
+def randomA(N, K):
+    """
+    Generate uniform random N x K signature matrix.
+
+    Parameters
+    ----------
+    N : number of genes
+    K : number of cell types
+
+    Returns
+    -------
+    A : array
+        signature matrix
+    """
+    A = np.random.rand(N, K)
+    A += eps
+    for k in range(K):
+        A[:, k] /= sum(A[:, k])
+    return A
+    
+
+
+def bulk(N, M, K, alpha, A=None):
     """
     Simulate bulk RNA-seq data according to Dirichlet-multinomial model from 
-    URSM.
+    URSM. No noise is induced.
     
     Parameters
     ----------
     N : number of genes
     M : number of samples
     K : number of cell types
-    depth : sequencing depth. Assumed to be constant across samples.
-    alpha : parameter for Dirichlet distribution
+    alpha : sequence of floats, length K
+        parameter for Dirichlet distribution
     A : array, optional
         N x K normalized signature matrix. Random if not supplied.
 
@@ -34,16 +75,49 @@ def bulk(N, M, K, depth, alpha, A=None):
         N x M data matrix giving expression level of each gene in each sample.
     """
     if A is None:
-        A = np.random.rand(N, K)
-        for k in range(K):
-            A[:, k] /= sum(A[:, k])
+        A = randomA(N, K)
     X = []
     for j in range(M):
         wj = np.random.dirichlet(alpha)
+        depth = np.random.poisson(50 * N)   # sequencing depth
         xj = np.random.multinomial(depth, A.dot(wj))
         X.append(xj)
     return np.array(X).T
 
+
+def true_single_cell(N, L, K, alpha, A=None):
+    """
+    Simulate scRNA-seq data according to multinomial model from URSM. No 
+    noise or dropout events are induced.
+
+    Parameters
+    ----------
+    N : number of genes
+    L : number of genes
+    K : number of cell types
+    alpha : sequence of floats, length K
+        proportions of each cell type, can be parameter for bulk dirichlet 
+        distribution
+    A : array, optional
+        N x K normalized signature matrix. Random if not supplied.
+
+    Returns
+    -------
+    Y : array
+        N x L data matrix giving expression level of each gene in each cell.
+    """
+    if A is None:
+        A = randomA()
+    proportions = np.array(alpha) / sum(alpha)
+    Y = []
+    for l in range(L):
+        Gl = categorical(proportions)  # cell type
+        depth = np.random.negative_binomial(2, 
+                                            1 - 2 * N / (2 * N + 2))
+        yj = np.random.multinomial(depth, A[:, Gl])
+        Y.append(yj)
+    return np.array(Y).T
+    
 
 def marker_quality(A):
     """
@@ -69,25 +143,27 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     np.set_printoptions(precision=3)
     
-    N = 100
-    M = 40
+    N = 70
+    M = 20
+    L = 100
     K = 8
-    depth = 600
     alpha = [ 1 for _ in range(K) ]
     #alpha = [9, 16, 0.3, 6]
     
-    A = np.random.rand(N, K)
-    for k in range(K):
-        A[:, k] /= sum(A[:, k])
+    A = randomA(N, K)
+    X = bulk(N, M, K, alpha, A=A)
+    Y = true_single_cell(N, L, K, alpha, A=A)
+    print("noiseless bulk data:\n", X)
+    print("noiseless single-cell data, no dropouts:\n", Y)
     
+    '''
     mq = marker_quality(A)
-    X = bulk(N, M, K, depth, alpha, A=A)
-    
     plt.scatter(
         [ max(mqn) for mqn in mq ],
         [ np.var(Xn) for Xn in X ]
         )
     plt.xlabel('marker quality')
     plt.ylabel('variance across samples')
+    '''
     
     
