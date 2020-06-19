@@ -61,7 +61,7 @@ def fractionInsideCone(X, Y):
     M = X.shape[1]
     L = Y.shape[1]
     count = 0
-    for j in range(M):  # see if X[:, j] is a convex combination of Y cols
+    for j in range(M):  # see if X[:, j] is a conical combination of Y cols
         c = np.zeros(L)
         lp = linprog(c, A_eq=Y, b_eq=X[:, j])
         if lp.success: count += 1
@@ -70,8 +70,8 @@ def fractionInsideCone(X, Y):
 
 def fractionInsideHull(X, Y):
     """
-    Count fraction of bulk RNA-seq profiles which are convex combinations of 
-    single cell profiles.
+    Count fraction of normalized bulk RNA-seq profiles which are convex 
+    combinations of normalized single cell profiles.
 
     Parameters
     ----------
@@ -85,7 +85,21 @@ def fractionInsideHull(X, Y):
     Fraction of normalized columns of X which are inside convex hull of 
     normalized Y columns.
     """
-    raise NotImplementedError()
+    M = X.shape[1]
+    L = Y.shape[1]
+    # preprocessing: normalization
+    X = normalize(X, norm='l1', axis=0)
+    Y = normalize(Y, norm='l1', axis=0)
+    count = 0
+    for j in range(M):  # see if X[:, j] is a convex combination of Y cols
+        c = np.zeros(L)
+        # add additional equality constraint to make combination convex
+        # (this constraint is redundant)
+        A_equation = np.r_[Y, np.ones((1, L))]
+        b_equation = np.r_[X[:, j], np.ones(1)]
+        lp = linprog(c, A_eq=A_equation, b_eq=b_equation)
+        if lp.success: count += 1
+    return count / M
 
 
 if __name__ == "__main__":
@@ -95,20 +109,20 @@ if __name__ == "__main__":
     M = 60
     L = 800
     K = 4
-    alpha = [ 1e9 for _ in range(K) ]  # assumes symmetric Dirichlet prior
+    alpha = [ 1e4 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
     A2 = sims.randomA(N, K)
     X1 = sims.bulk(N, M, K, alpha, A=A1)
     X2 = sims.bulk(N, M, K, alpha, A=A2)
     Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
     
-    '''
+    print("using convex hull:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
           fractionInsideHull(X1, Y1))
     print('Are X2 and Y1 joint? Expect 0.0, receive', 
           fractionInsideHull(X2, Y1))
-    '''
     
+    print("using conical hull:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
           fractionInsideCone(X1, Y1))
     print('Are X2 and Y1 joint? Expect 0.0, receive', 
