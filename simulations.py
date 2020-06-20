@@ -9,6 +9,7 @@ Simulate RNA-seq data for SPADA lab research.
 """
 
 import numpy as np
+from sklearn.preprocessing import normalize
 
 
 eps = 1e-6
@@ -48,8 +49,7 @@ def randomA(N, K):
     """
     A = np.random.rand(N, K)
     A += eps
-    for k in range(K):
-        A[:, k] /= sum(A[:, k])
+    A = normalize(A, norm='l1', axis=0)
     return A
     
 
@@ -117,6 +117,32 @@ def true_single_cell(N, L, K, alpha, A=None):
         yj = np.random.multinomial(depth, A[:, Gl])
         Y.append(yj)
     return np.array(Y).T
+
+
+def doubleExpDropouts(Y, lam):
+    """
+    Induce dropouts according to decaying squared exponenetial model as in 
+    ZIFA.
+
+    Parameters
+    ----------
+    Y : array
+        N x L true expression levels for single cell data
+    lam : float
+        double exponential decay coefficient
+    
+    Effects
+    -------
+    Randomly zero elements of Y with probability 
+    double exponential in the log of true expression.
+    """
+    N = Y.shape[0]
+    L = Y.shape[1]
+    for n in range(N):
+        for l in range(L):
+            if Y[n, l] > 0:
+                if np.random.rand() < np.e ** (-lam * np.log(Y[n, l]) ** 2):
+                    Y[n, l] = 0
     
 
 def marker_quality(A):
@@ -147,6 +173,7 @@ if __name__ == "__main__":
     M = 20
     L = 100
     K = 8
+    lam = 0.1
     alpha = [ 1 for _ in range(K) ]
     #alpha = [9, 16, 0.3, 6]
     
@@ -155,6 +182,8 @@ if __name__ == "__main__":
     Y = true_single_cell(N, L, K, alpha, A=A)
     print("noiseless bulk data:\n", X)
     print("noiseless single-cell data, no dropouts:\n", Y)
+    doubleExpDropouts(Y, lam)
+    print("single-cell data after dropouts:\n", Y)
     
     '''
     mq = marker_quality(A)

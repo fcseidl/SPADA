@@ -104,23 +104,28 @@ def fractionInsideHull(X, Y):
 
 if __name__ == "__main__":
     import simulations as sims
+    np.random.seed(3)
     
-    N = 100
-    M = 60
+    N = 300
+    M = 50
     L = 800
-    K = 4
+    K = 5
+    lam = 0.5
     alpha = [ 1e4 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
     A2 = sims.randomA(N, K)
     X1 = sims.bulk(N, M, K, alpha, A=A1)
     X2 = sims.bulk(N, M, K, alpha, A=A2)
     Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
+    sims.doubleExpDropouts(Y1, lam)
     
+    '''
     print("using convex hull:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
           fractionInsideHull(X1, Y1))
     print('Are X2 and Y1 joint? Expect 0.0, receive', 
           fractionInsideHull(X2, Y1))
+    '''
     
     print("using conical hull:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
