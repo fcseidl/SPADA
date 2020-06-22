@@ -143,26 +143,6 @@ def doubleExpDropouts(Y, lam):
             if Y[n, l] > 0:
                 if np.random.rand() < np.e ** (-lam * np.log(Y[n, l]) ** 2):
                     Y[n, l] = 0
-    
-
-def marker_quality(A):
-    """
-    Parameters
-    ----------
-    A : array
-        Signature matrix for N genes in K cell types.
-
-    Returns
-    -------
-    mq : array
-        N x K matrix whose n,k entry is marker quality of nth gene for kth 
-        cell type
-    """
-    mq = np.zeros(A.shape)
-    for n in range(A.shape[0]):
-        s = sum(A[n])
-        mq[n] = [ A[n][k] / s for k in range(A.shape[1]) ]
-    return mq
 
 
 if __name__ == "__main__":

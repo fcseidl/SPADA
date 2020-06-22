@@ -10,12 +10,15 @@ Tests to decide whether bulk and scRNA-seq datasets are joint.
 
 import numpy as np
 from sklearn.preprocessing import normalize
+from sklearn.decomposition import FactorAnalysis
 from scipy.spatial import ConvexHull
 from scipy.optimize import linprog
 
 
 def HullContainment(X, Y):
     """
+    NOTE: false negatives are too likely with this method.
+    
     Check that bulk and scRNA-seq data matrices are joint by verifying that 
     bulk profiles are inside convex hull of single-cell profiles.
 
@@ -40,32 +43,6 @@ def HullContainment(X, Y):
     hull = ConvexHull(points, incremental=False, qhull_options='QJ QbB')
     vertices = np.unique(hull.simplices.ravel())
     return (vertices >= M).all()
-
-
-def fractionInsideCone(X, Y):
-    """
-    Count fraction of bulk RNA-seq profiles which are conical combinations of
-    single cell profiles.
-
-    Parameters
-    ----------
-    X : array, shape (N, M)
-        bulk data matrix
-    Y : array, shape (N, L)
-        single-cell data matrix
-
-    Returns
-    -------
-    Fraction of columns of X which are inside conical hull of columns of Y.
-    """
-    M = X.shape[1]
-    L = Y.shape[1]
-    count = 0
-    for j in range(M):  # see if X[:, j] is a conical combination of Y cols
-        c = np.zeros(L)
-        lp = linprog(c, A_eq=Y, b_eq=X[:, j])
-        if lp.success: count += 1
-    return count / M
 
 
 def fractionInsideHull(X, Y):
@@ -105,14 +82,40 @@ def fractionInsideHull(X, Y):
     return count / M
 
 
+def fractionInsideCone(X, Y):
+    """
+    Count fraction of bulk RNA-seq profiles which are conical combinations of
+    single cell profiles.
+
+    Parameters
+    ----------
+    X : array, shape (N, M)
+        bulk data matrix
+    Y : array, shape (N, L)
+        single-cell data matrix
+
+    Returns
+    -------
+    Fraction of columns of X which are inside conical hull of columns of Y.
+    """
+    M = X.shape[1]
+    L = Y.shape[1]
+    count = 0
+    for j in range(M):  # see if X[:, j] is a conical combination of Y cols
+        c = np.zeros(L)
+        lp = linprog(c, A_eq=Y, b_eq=X[:, j])
+        if lp.success: count += 1
+    return count / M
+
+
 if __name__ == "__main__":
     import simulations as sims
-    np.random.seed(4)
+    #np.random.seed(34)
     
-    N = 2000
+    N = 100
     M = 50
-    L = 8000
-    K = 3
+    L = 500
+    K = 4
     lam = 0.1
     alpha = [ 1e5 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
@@ -122,26 +125,22 @@ if __name__ == "__main__":
     Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
     sims.doubleExpDropouts(Y1, lam)
     
-    '''
-    print("using convex hull:")
-    print('Are X1 and Y1 joint? Expect 1.0, receive', 
-          fractionInsideHull(X1, Y1))
-    print('Are X2 and Y1 joint? Expect 0.0, receive', 
-          fractionInsideHull(X2, Y1))
-    '''
-    
-    
-    print("using conical hull:")
+    print("using conical hull of true data:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
           fractionInsideCone(X1, Y1))
     print('Are X2 and Y1 joint? Expect 0.0, receive', 
           fractionInsideCone(X2, Y1))
     
-    '''
-    print('Are X1 and Y1 joint? Expect True, receive', 
-          HullContainment(X1, Y1))
-    print('Are X2 and Y1 joint? Expect False, receive', 
-          HullContainment(X2, Y1))
-    '''
+    model = FactorAnalysis(n_components=K)
+    join1 = np.concatenate((X1, Y1), axis=1).T
+    Z1 = model.fit_transform(join1).T
+    join2 = np.concatenate((X2, Y1), axis=1).T
+    Z2 = model.fit_transform(join2).T
+    
+    print("using conical hull of dimension-reduced data:")
+    print('Are X1 and Y1 joint? Expect 1.0, receive', 
+          fractionInsideCone(Z1[:, :M], Z1[:, M:]))
+    print('Are X2 and Y1 joint? Expect 0.0, receive', 
+          fractionInsideCone(Z2[:, :M], Z2[:, M:]))
     
     
