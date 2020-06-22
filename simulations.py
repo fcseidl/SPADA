@@ -107,7 +107,7 @@ def true_single_cell(N, L, K, alpha, A=None):
         N x L data matrix giving expression level of each gene in each cell.
     """
     if A is None:
-        A = randomA()
+        A = randomA(N, K)
     proportions = np.array(alpha) / sum(alpha)
     Y = []
     for l in range(L):
@@ -167,12 +167,14 @@ def marker_quality(A):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    from ZIFA import ZIFA
+    from SPADAutil import ZIFApreprocessing
     np.set_printoptions(precision=3)
     
     N = 70
     M = 20
     L = 100
-    K = 8
+    K = 4
     lam = 0.1
     alpha = [ 1 for _ in range(K) ]
     #alpha = [9, 16, 0.3, 6]
@@ -184,6 +186,10 @@ if __name__ == "__main__":
     print("noiseless single-cell data, no dropouts:\n", Y)
     doubleExpDropouts(Y, lam)
     print("single-cell data after dropouts:\n", Y)
+    
+    Y = ZIFApreprocessing(Y)
+    Z, params = ZIFA.fitModel(Y, K)
+    print("ZIFA estimated latent positions:\n", Z)
     
     '''
     mq = marker_quality(A)

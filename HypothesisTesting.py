@@ -70,6 +70,9 @@ def fractionInsideCone(X, Y):
 
 def fractionInsideHull(X, Y):
     """
+    NOTE: fractionInsideCone is more efficient and less likely to produce
+    OptimizeWarnings.
+    
     Count fraction of normalized bulk RNA-seq profiles which are convex 
     combinations of normalized single cell profiles.
 
@@ -104,14 +107,14 @@ def fractionInsideHull(X, Y):
 
 if __name__ == "__main__":
     import simulations as sims
-    np.random.seed(3)
+    np.random.seed(4)
     
-    N = 300
+    N = 2000
     M = 50
-    L = 800
-    K = 5
-    lam = 0.5
-    alpha = [ 1e4 for _ in range(K) ]  # assumes symmetric Dirichlet prior
+    L = 8000
+    K = 3
+    lam = 0.1
+    alpha = [ 1e5 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
     A2 = sims.randomA(N, K)
     X1 = sims.bulk(N, M, K, alpha, A=A1)
@@ -126,6 +129,7 @@ if __name__ == "__main__":
     print('Are X2 and Y1 joint? Expect 0.0, receive', 
           fractionInsideHull(X2, Y1))
     '''
+    
     
     print("using conical hull:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
