@@ -12,7 +12,7 @@ import numpy as np
 from sklearn.preprocessing import normalize
 from sklearn.decomposition import FactorAnalysis
 from scipy.spatial import ConvexHull
-from scipy.optimize import linprog
+from scipy.optimize import linprog, nnls
 
 
 def HullContainment(X, Y):
@@ -108,14 +108,37 @@ def fractionInsideCone(X, Y):
     return count / M
 
 
+def residualsToCone(X, Y):
+    """
+    Compute bulk profiles' average normalized distance to conical hull.
+
+    Parameters
+    ----------
+    X : array, shape (N, M)
+        bulk data matrix
+    Y : array, shape (N, L)
+        single-cell data matrix
+
+    Returns
+    -------
+    Average over j of min ||X[:, j] - b|| / ||X[:, j]|| for b in cone(Y).
+    """
+    M = X.shape[1]
+    normalized_residuals = []
+    for j in range(M):
+        _, norm = nnls(Y, X[:, j])
+        normalized_residuals.append(norm / np.linalg.norm(X[:, j]))
+    return sum(normalized_residuals) / M
+        
+
 if __name__ == "__main__":
     import simulations as sims
     #np.random.seed(34)
     
-    N = 100
-    M = 50
-    L = 500
-    K = 4
+    N = 1000
+    M = 40
+    L = 100
+    K = 9
     lam = 0.1
     alpha = [ 1e5 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
@@ -125,6 +148,13 @@ if __name__ == "__main__":
     Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
     sims.doubleExpDropouts(Y1, lam)
     
+    print("using residuals of true data:")
+    print('Are X1 and Y1 joint? Expect 0, receive', 
+          residualsToCone(X1, Y1))
+    print('Are X2 and Y1 joint? Expect > 0, receive', 
+          residualsToCone(X2, Y1))
+    
+    '''
     print("using conical hull of true data:")
     print('Are X1 and Y1 joint? Expect 1.0, receive', 
           fractionInsideCone(X1, Y1))
@@ -142,5 +172,6 @@ if __name__ == "__main__":
           fractionInsideCone(Z1[:, :M], Z1[:, M:]))
     print('Are X2 and Y1 joint? Expect 0.0, receive', 
           fractionInsideCone(Z2[:, :M], Z2[:, M:]))
+    '''
     
     
