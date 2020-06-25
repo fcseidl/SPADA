@@ -29,6 +29,8 @@ using namespace std;
  num. If num is larger than half the number of rows or columns, then
  entire rows or columns are printed without ellipses.
  
+ Finally, print the dimensions of the array.
+ 
  Single-pass, O(num^2) space.
  */
 void print_corners(int num, const char * delims) {
@@ -103,6 +105,9 @@ void print_corners(int num, const char * delims) {
         print_tsv(right[r]);
         cout << '\n';
     } // for r
+    
+    // print dimensions
+    cout << "\nArray is " << row << " rows by " << num_cols << " columns.\n";
 } // print_corners()
 
 
@@ -116,6 +121,6 @@ int main(int argc, char *argv[]) {
     // format decimal numbers
     cout << setprecision(2) << fixed;
 
-    print_corners(5, " \t");
+    print_corners(4, " \t");
     return 0;
 } // main
