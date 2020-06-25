@@ -4,4 +4,6 @@ __pycache__/
 
 ZIFA/
 
+*.xcodeproj
+
 
