@@ -141,7 +141,7 @@ def doubleExpDropouts(Y, lam):
     for n in range(N):
         for l in range(L):
             if Y[n, l] > 0:
-                if np.random.rand() < np.e ** (-lam * np.log(Y[n, l]) ** 2):
+                if np.random.rand() < np.e ** (-lam * (np.log(Y[n, l]) ** 2)):
                     Y[n, l] = 0
 
 

@@ -138,9 +138,9 @@ if __name__ == "__main__":
     N = 1000
     M = 40
     L = 100
-    K = 9
+    K = 11
     lam = 0.1
-    alpha = [ 1e5 for _ in range(K) ]  # assumes symmetric Dirichlet prior
+    alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
     A2 = sims.randomA(N, K)
     X1 = sims.bulk(N, M, K, alpha, A=A1)
