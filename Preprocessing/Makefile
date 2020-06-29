@@ -1,10 +1,10 @@
-process: Preprocessing.cpp
-	g++ -std=c++11 Preprocessing.cpp -o process.exe
+preprocess: Preprocessing.cpp
+	g++ -std=c++11 Preprocessing.cpp -o preprocess.exe
 	
-test: process
-	./process.exe test_names.txt test_authors.txt ssf_names.txt ssf_authors.txt
-	cat ssf_names.txt
-	cat ssf_authors.txt
+test: preprocess
+	./preprocess.exe ssf test_names.txt test_authors.txt ssf_names.txt ssf_authors.txt
+	./preprocess.exe corners ssf_names.txt
+	./preprocess.exe corners ssf_authors.txt
 
 clean:
 	rm ssf*

@@ -68,36 +68,37 @@ void sorted_shared_features(const string &small_in,
 
 
 /*
- Read a 2d array from stdin. Rows are separated by newlines;
- columns are separated by any delimiters which appear in the
- parameter delims. Print the corner values of the array, using
- the following format:
- 
- 1 1 1 ... 3 1 3
- 4 1 3 ... 0 2 1
- 3 6 2 ... 0 2 0
- ...
- 6 3 0 ... 0 0 4
- 3 3 4 ... 1 3 2
- 1 1 3 ... 3 0 7
- 
- The size of the corner squares printed is determined by the parameter
- num. If num is larger than half the number of rows or columns, then
- entire rows or columns are printed without ellipses.
- 
- Finally, print the dimensions of the array.
- 
- Single-pass, O(num^2) space.
- */
-void print_corners(int num, const char * delims) {
+Read a 2d array from a file. Rows are separated by newlines;
+columns are separated by any delimiters which appear in the
+parameter delims. Print the corner values of the array, using
+the following format:
+
+1 1 1 ... 3 1 3
+4 1 3 ... 0 2 1
+3 6 2 ... 0 2 0
+...
+6 3 0 ... 0 0 4
+3 3 4 ... 1 3 2
+1 1 3 ... 3 0 7
+
+The size of the corner squares printed is determined by the parameter
+num. If num is larger than half the number of rows or columns, then
+entire rows or columns are printed without ellipses.
+
+Finally, print the dimensions of the array.
+
+Single-pass, O(num^2) space.
+*/
+void print_corners(int num, const string &filename, const char * delims) {
     string line;
+    ifstream reader(filename);
     deque< deque<string> > left(1);
     deque< deque<string> > right(1);
     char * ptr;
     size_t row, col, num_cols, begin_right;
     
     // read first line, determine column index at which right corners begin
-    getline(cin, line);
+    getline(reader, line);
     num_cols = 0;
     ptr = strtok(&(line[0]), delims);
     while (ptr) {
@@ -114,7 +115,7 @@ void print_corners(int num, const char * delims) {
     begin_right = num_cols - right[0].size();
     
     // iterate over successive rows starting at second row
-    for (row = 1; getline(cin, line); ++row) {
+    for (row = 1; getline(reader, line); ++row) {
         if (row == (size_t)num) {
             // if num rows read, then print top corners
             for (size_t r = 0; r < num; ++r) {
@@ -165,20 +166,20 @@ void print_corners(int num, const char * delims) {
 } // print_corners()
 
 
-/*
- Read a 2d array from stdin, and print its first column to stdout.
- Columns delimiting characters are in the parameter delims.
- 
- Single-pass.
-*/
-void print_first_col(const char * delims) {
-    string line;
-    char * firsttok;
-    while (getline(cin, line)) {
-        firsttok = strtok(&(line[0]), delims);
-        cout << firsttok << '\n';
-    } // while
-} // print_first_col()
+///*
+// Read a 2d array from stdin, and print its first column to stdout.
+// Columns delimiting characters are in the parameter delims.
+// 
+// Single-pass.
+//*/
+//void print_first_col(const char * delims) {
+//    string line;
+//    char * firsttok;
+//    while (getline(cin, line)) {
+//        firsttok = strtok(&(line[0]), delims);
+//        cout << firsttok << '\n';
+//    } // while
+//} // print_first_col()
 
 
 int main(int argc, char *argv[]) {
@@ -187,9 +188,20 @@ int main(int argc, char *argv[]) {
     
     // redirect input for Xcode debugging
     xcode_redirect(argc, argv);
-
-    sorted_shared_features(argv[1], argv[2], argv[3], argv[4], ", \t");
-    //print_corners(atoi(argv[1]), ", \t");
-    //print_first_col(", \t");
+    
+    switch (argv[1][0]) {
+        case 'c':   // corners
+            print_corners(4, argv[2], DEFAULT_DELIMS);
+            break;
+        case 's':   // ssf
+            sorted_shared_features(argv[2], argv[3], argv[4], argv[5], DEFAULT_DELIMS);
+            break;
+        default:
+            cout << "Usage:\n"
+                << "./preprocess.exe corners [filename]\n"
+                << "or\n"
+                << "./preprocess.exe ssf [small_in] [large_in] [small_out] [large_out]\n";
+            return 1;
+    }
     return 0;
 } // main

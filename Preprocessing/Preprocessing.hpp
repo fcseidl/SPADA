@@ -21,6 +21,8 @@
 #include <unordered_map>
 
 
+const char * DEFAULT_DELIMS = ", \t";
+
 /*
  Return string containing first token of a line.
  */
@@ -55,7 +57,7 @@ void print_tsv(const rangeType<eltType> & range) {
 
 
 /*
-Read a 2d array from stdin. Rows are separated by newlines;
+Read a 2d array from a file. Rows are separated by newlines;
 columns are separated by any delimiters which appear in the
 parameter delims. Print the corner values of the array, using
 the following format:
@@ -76,15 +78,15 @@ Finally, print the dimensions of the array.
 
 Single-pass, O(num^2) space.
 */
-void print_corners(int num, char delim);
+void print_corners(int num, const std::string &filename, const char * delims);
 
 
-/*
- Read a 2d array from stdin, and print its first column to stdout.
- Columns delimiting characters are in the parameter delims.
- 
- Single-pass.
-*/
-void print_first_col();
+///*
+// Read a 2d array from stdin, and print its first column to stdout.
+// Columns delimiting characters are in the parameter delims.
+//
+// Single-pass.
+//*/
+//void print_first_col();
 
 #endif /* Preprocessing_hpp */
