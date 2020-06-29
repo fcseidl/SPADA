@@ -68,11 +68,6 @@ def findBlockExpressingNGenes(data, n_samps, n_expressed):
 
 
 if __name__ == "__main__":
-    bulkfile = (
-    "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv")
-    scfile = (
-    "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl__scESET.csv")
-      
     # simple test for findBlockExpressingNGenes()
     if 0:
         data = np.array([[0, 1, 0, 2, 0, 3],

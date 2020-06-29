@@ -10,9 +10,9 @@ Tests to decide whether bulk and scRNA-seq datasets are joint.
 
 import numpy as np
 from sklearn.preprocessing import normalize
-from sklearn.decomposition import FactorAnalysis
 from scipy.spatial import ConvexHull
 from scipy.optimize import linprog, nnls
+from statistics import variance
 
 
 def HullContainment(X, Y):
@@ -129,15 +129,43 @@ def residualsToCone(X, Y):
         _, norm = nnls(Y, X[:, j])
         normalized_residuals.append(norm / np.linalg.norm(X[:, j]))
     return sum(normalized_residuals) / M
+
+
+def pvalue(X, Y):
+    """
+    Compute a bound for the probability of data under the null hypothesis that 
+    bulk and scRNA-seq data are totally unrelated.
+
+    Parameters
+    ----------
+    X : array, shape (N, M)
+        bulk data matrix
+    Y : array, shape (N, L)
+        single-cell data matrix
+
+    Returns
+    -------
+    Chebyshev bound for probability under null hypothesis.
+    """
+    true_residuals = residualsToCone(X, Y)   # true order
+    permuted_residuals = []
+    for n in range(10):     # TODO: magic number here...
+        X_permuted = np.random.permutation(X)
+        permuted_residuals.append(residualsToCone(X_permuted, Y))
+    exp = np.mean(permuted_residuals)
+    a = np.abs(exp - true_residuals)
+    var = variance(permuted_residuals)
+    return var / (a ** 2)   # Chebyshev bound
+        
         
 
 if __name__ == "__main__":
     # test with 3 cell line mixture data
     if 1:
         import preprocessing
-        np.random.seed(44)
+        np.random.seed(0)
         
-        # local files, not available on other machines
+        # NOTE: these are local files which are unavailable on other machines
         bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv"
         scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_scESET.csv"
         
@@ -172,6 +200,15 @@ if __name__ == "__main__":
               residualsToCone(X2, Y1))
         print("Are X2 and Y2 joint? Expect 0, receive",
               residualsToCone(X2, Y2))
+        
+        print("Probability of X1 and Y1 under null hypothesis <=",
+              pvalue(X1, Y1))
+        print("Probability of X1 and Y2 under null hypothesis <=",
+              pvalue(X1, Y2))
+        print("Probability of X2 and Y1 under null hypothesis <=",
+              pvalue(X2, Y1))
+        print("Probability of X2 and Y2 under null hypothesis <=",
+              pvalue(X2, Y2))
     
     # test with simulated data
     if 0:
