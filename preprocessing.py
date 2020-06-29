@@ -12,6 +12,30 @@ import numpy as np
 import csv
 
 
+def csvToMatrix(filename, delim=','):
+    """
+    Convert a csv table to a 2d numpy array by removing first row and col
+    (containing names), and converting to floats.
+
+    Parameters
+    ----------
+    filename : string
+        name of csv file
+    delim : character, optional
+        delimiting character, comma by default
+
+    Returns
+    -------
+    A 2d numpy array containing (unlabeled) data from file.
+    """
+    with open(filename) as readfile:
+        read_csv = csv.reader(readfile, delimiter=delim)
+        result = np.array([ row for row in read_csv ])
+    result = result[1:, 1:]
+    result = result.astype(np.float)
+    return result
+
+
 def findBlockExpressingNGenes(data, n_samps, n_expressed):
     """
     Search data for contiguous block of n_samps samples which express exactly 
@@ -44,11 +68,11 @@ def findBlockExpressingNGenes(data, n_samps, n_expressed):
 
 
 if __name__ == "__main__":
-    bulkfile = "/Users/fcseidl/Downloads/MIX3cl__bulkESET.rds"
-    scfile = "/Users/fcseidl/Downloads/MIX3cl__scESET.rds"
-    
-    
-    
+    bulkfile = (
+    "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv")
+    scfile = (
+    "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl__scESET.csv")
+      
     # simple test for findBlockExpressingNGenes()
     if 0:
         data = np.array([[0, 1, 0, 2, 0, 3],

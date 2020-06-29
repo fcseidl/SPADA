@@ -132,47 +132,90 @@ def residualsToCone(X, Y):
         
 
 if __name__ == "__main__":
-    import simulations as sims
-    #np.random.seed(34)
+    # test with 3 cell line mixture data
+    if 1:
+        import preprocessing
+        np.random.seed(44)
+        
+        # local files, not available on other machines
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_scESET.csv"
+        
+        print("Reading full data matrices X and Y...")
+        X = preprocessing.csvToMatrix(bulkfile)
+        Y = preprocessing.csvToMatrix(scfile)
+        
+        N = X.shape[0]
+        assert(Y.shape[0] == N)
+        print("Number of genes:", N)
+        print("Number of bulk samples:", X.shape[1])
+        print("Number of single cells:", Y.shape[1])
+        
+        print("Shuffling X and Y together...")
+        indices = np.arange(N)
+        np.random.shuffle(indices)
+        X = X[indices]
+        Y = Y[indices]
+        
+        print("Constructing half data matrices X1, X2, Y1, Y2...")
+        halfway = int(N / 2)
+        X1 = X[:halfway]
+        X2 = X[halfway:]
+        Y1 = Y[:halfway]
+        Y2 = Y[halfway:]
     
-    N = 273
-    M = 72
-    L = 213
-    K = 3
-    lam = 0.1
-    alpha = [ 2e4, 1e4, 7e4 ]
-    #alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
-    A1 = sims.randomA(N, K)
-    A2 = sims.randomA(N, K)
-    X1 = sims.bulk(N, M, K, alpha, A=A1)
-    X2 = sims.bulk(N, M, K, alpha, A=A2)
-    Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
-    sims.doubleExpDropouts(Y1, lam)
+        print("Are X1 and Y1 joint? Expect 0, receive",
+              residualsToCone(X1, Y1))
+        print("Are X1 and Y2 joint? Expect > 0, receive",
+              residualsToCone(X1, Y2))
+        print("Are X2 and Y1 joint? Expect > 0, receive",
+              residualsToCone(X2, Y1))
+        print("Are X2 and Y2 joint? Expect 0, receive",
+              residualsToCone(X2, Y2))
     
-    print("using residuals of true data:")
-    print('Are X1 and Y1 joint? Expect 0, receive', 
-          residualsToCone(X1, Y1))
-    print('Are X2 and Y1 joint? Expect > 0, receive', 
-          residualsToCone(X2, Y1))
-    
-    '''
-    print("using conical hull of true data:")
-    print('Are X1 and Y1 joint? Expect 1.0, receive', 
-          fractionInsideCone(X1, Y1))
-    print('Are X2 and Y1 joint? Expect 0.0, receive', 
-          fractionInsideCone(X2, Y1))
-    
-    model = FactorAnalysis(n_components=K)
-    join1 = np.concatenate((X1, Y1), axis=1).T
-    Z1 = model.fit_transform(join1).T
-    join2 = np.concatenate((X2, Y1), axis=1).T
-    Z2 = model.fit_transform(join2).T
-    
-    print("using conical hull of dimension-reduced data:")
-    print('Are X1 and Y1 joint? Expect 1.0, receive', 
-          fractionInsideCone(Z1[:, :M], Z1[:, M:]))
-    print('Are X2 and Y1 joint? Expect 0.0, receive', 
-          fractionInsideCone(Z2[:, :M], Z2[:, M:]))
-    '''
+    # test with simulated data
+    if 0:
+        import simulations as sims
+        #np.random.seed(34)
+        
+        N = 273
+        M = 72
+        L = 213
+        K = 3
+        lam = 0.1
+        alpha = [ 2e4, 1e4, 7e4 ]
+        #alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
+        A1 = sims.randomA(N, K)
+        A2 = sims.randomA(N, K)
+        X1 = sims.bulk(N, M, K, alpha, A=A1)
+        X2 = sims.bulk(N, M, K, alpha, A=A2)
+        Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
+        sims.doubleExpDropouts(Y1, lam)
+        
+        print("using residuals of true data:")
+        print('Are X1 and Y1 joint? Expect 0, receive', 
+              residualsToCone(X1, Y1))
+        print('Are X2 and Y1 joint? Expect > 0, receive', 
+              residualsToCone(X2, Y1))
+        
+        '''
+        print("using conical hull of true data:")
+        print('Are X1 and Y1 joint? Expect 1.0, receive', 
+              fractionInsideCone(X1, Y1))
+        print('Are X2 and Y1 joint? Expect 0.0, receive', 
+              fractionInsideCone(X2, Y1))
+        
+        model = FactorAnalysis(n_components=K)
+        join1 = np.concatenate((X1, Y1), axis=1).T
+        Z1 = model.fit_transform(join1).T
+        join2 = np.concatenate((X2, Y1), axis=1).T
+        Z2 = model.fit_transform(join2).T
+        
+        print("using conical hull of dimension-reduced data:")
+        print('Are X1 and Y1 joint? Expect 1.0, receive', 
+              fractionInsideCone(Z1[:, :M], Z1[:, M:]))
+        print('Are X2 and Y1 joint? Expect 0.0, receive', 
+              fractionInsideCone(Z2[:, :M], Z2[:, M:]))
+        '''
     
     

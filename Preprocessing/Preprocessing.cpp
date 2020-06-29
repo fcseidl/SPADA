@@ -202,6 +202,6 @@ int main(int argc, char *argv[]) {
                 << "or\n"
                 << "./preprocess.exe ssf [small_in] [large_in] [small_out] [large_out]\n";
             return 1;
-    }
+    } // switch
     return 0;
 } // main
