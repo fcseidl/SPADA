@@ -135,12 +135,13 @@ if __name__ == "__main__":
     import simulations as sims
     #np.random.seed(34)
     
-    N = 1000
-    M = 40
-    L = 100
-    K = 11
+    N = 273
+    M = 72
+    L = 213
+    K = 3
     lam = 0.1
-    alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
+    alpha = [ 2e4, 1e4, 7e4 ]
+    #alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
     A1 = sims.randomA(N, K)
     A2 = sims.randomA(N, K)
     X1 = sims.bulk(N, M, K, alpha, A=A1)

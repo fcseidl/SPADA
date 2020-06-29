@@ -11,6 +11,62 @@
 
 using namespace std;
 
+
+/*
+ Return string containing first token of a line.
+ */
+std::string first_token(std::string line, const char * delims) {
+    char * str = &(line[0]);
+    char * token = strtok(str, delims);
+    return string(token);
+} // first_token()
+
+
+/*
+Take two csv files small_in and large_in. For fastest performance,
+the file with fewer rows should be first. Write two new csv files,
+small_out and large_out, containing rows of small_in and large_in
+whose names (first tokens) appear in both files, in lexicographical
+sorted order. Row names must be unique.
+
+Runtime: linear in lengths of files, log-linear in number of shared
+row names.
+*/
+void sorted_shared_features(const string &small_in,
+                            const string &large_in,
+                            const string &small_out,
+                            const string &large_out,
+                            const char * delims) {
+    string row;
+    unordered_map<string, string> small_rows_by_name;
+    map<string, string> large_matched_rows;
+    ifstream read_small(small_in), read_large(large_in);
+    ofstream write_small(small_out), write_large(large_out);
+    
+    // read rows of first file, hash them by name
+    while (getline(read_small, row)) {
+        string row_name = first_token(row, delims);
+        small_rows_by_name[row_name] = row;
+    } // while reading 1
+    
+    // read rows of second file, storing them in map if they match rows in first
+    while (getline(read_large, row)) {
+        string row_name = first_token(row, delims);
+        if (small_rows_by_name.count(row_name)) {
+            large_matched_rows[row_name] = row;
+        } // if
+    } // while reading 2
+    
+    // write matching rows in sorted order into both outfiles
+    for (auto &pair:large_matched_rows) {
+        const string &row_name = pair.first;
+        const string &large_row = pair.second;
+        write_large << large_row << '\n';
+        write_small << small_rows_by_name[row_name] << '\n';
+    } // for matching rows
+} // only_shared_features()
+
+
 /*
  Read a 2d array from stdin. Rows are separated by newlines;
  columns are separated by any delimiters which appear in the
@@ -46,7 +102,6 @@ void print_corners(int num, const char * delims) {
     ptr = strtok(&(line[0]), delims);
     while (ptr) {
         string token(ptr);
-        token = token.substr(0, 3);
         if (num_cols < num) {   // left gets first num entries
             left[0].push_back(token);
         } else {                // rightmost num entries in right
@@ -84,7 +139,6 @@ void print_corners(int num, const char * delims) {
         ptr = strtok(&(line[0]), delims);
         while (ptr) {
             string token(ptr);
-            token = token.substr(0, 3);
             if (col < num) {   // left gets first num entries
                 left.back().push_back(token);
             } else if (col >= begin_right) {
@@ -111,16 +165,31 @@ void print_corners(int num, const char * delims) {
 } // print_corners()
 
 
+/*
+ Read a 2d array from stdin, and print its first column to stdout.
+ Columns delimiting characters are in the parameter delims.
+ 
+ Single-pass.
+*/
+void print_first_col(const char * delims) {
+    string line;
+    char * firsttok;
+    while (getline(cin, line)) {
+        firsttok = strtok(&(line[0]), delims);
+        cout << firsttok << '\n';
+    } // while
+} // print_first_col()
+
+
 int main(int argc, char *argv[]) {
     // speeds up I/O
     ios_base::sync_with_stdio(false);
     
     // redirect input for Xcode debugging
     xcode_redirect(argc, argv);
-    
-    // format decimal numbers
-    cout << setprecision(2) << fixed;
 
-    print_corners(4, " \t");
+    sorted_shared_features(argv[1], argv[2], argv[3], argv[4], ", \t");
+    //print_corners(atoi(argv[1]), ", \t");
+    //print_first_col(", \t");
     return 0;
 } // main

@@ -66,4 +66,3 @@ def marker_quality(A):
         s = sum(A[n])
         mq[n] = [ A[n][k] / s for k in range(A.shape[1]) ]
     return mq
-    
