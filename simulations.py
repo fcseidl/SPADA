@@ -32,7 +32,6 @@ def categorical(p):
     return list(counts).index(1)
     
 
-
 def randomA(N, K):
     """
     Generate uniform random N x K signature matrix.
@@ -52,7 +51,6 @@ def randomA(N, K):
     A = normalize(A, norm='l1', axis=0)
     return A
     
-
 
 def bulk(N, M, K, alpha, A=None):
     """

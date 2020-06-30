@@ -157,7 +157,6 @@ def pvalue(X, Y):
     var = variance(permuted_residuals)
     return var / (a ** 2)   # Chebyshev bound
         
-        
 
 if __name__ == "__main__":
     # test with 3 cell line mixture data
@@ -179,7 +178,7 @@ if __name__ == "__main__":
         print("Number of bulk samples:", X.shape[1])
         print("Number of single cells:", Y.shape[1])
         
-        print("Shuffling X and Y together...")
+        print("Shuffling X alongside Y...")
         indices = np.arange(N)
         np.random.shuffle(indices)
         X = X[indices]
@@ -211,7 +210,7 @@ if __name__ == "__main__":
               pvalue(X2, Y2))
     
     # test with simulated data
-    if 0:
+    if 1:
         import simulations as sims
         #np.random.seed(34)
         
@@ -222,6 +221,7 @@ if __name__ == "__main__":
         lam = 0.1
         alpha = [ 2e4, 1e4, 7e4 ]
         #alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
+        print("Simulating datasets...")
         A1 = sims.randomA(N, K)
         A2 = sims.randomA(N, K)
         X1 = sims.bulk(N, M, K, alpha, A=A1)
@@ -235,24 +235,9 @@ if __name__ == "__main__":
         print('Are X2 and Y1 joint? Expect > 0, receive', 
               residualsToCone(X2, Y1))
         
-        '''
-        print("using conical hull of true data:")
-        print('Are X1 and Y1 joint? Expect 1.0, receive', 
-              fractionInsideCone(X1, Y1))
-        print('Are X2 and Y1 joint? Expect 0.0, receive', 
-              fractionInsideCone(X2, Y1))
-        
-        model = FactorAnalysis(n_components=K)
-        join1 = np.concatenate((X1, Y1), axis=1).T
-        Z1 = model.fit_transform(join1).T
-        join2 = np.concatenate((X2, Y1), axis=1).T
-        Z2 = model.fit_transform(join2).T
-        
-        print("using conical hull of dimension-reduced data:")
-        print('Are X1 and Y1 joint? Expect 1.0, receive', 
-              fractionInsideCone(Z1[:, :M], Z1[:, M:]))
-        print('Are X2 and Y1 joint? Expect 0.0, receive', 
-              fractionInsideCone(Z2[:, :M], Z2[:, M:]))
-        '''
+        print("Probability of X1 and Y1 under null hypothesis <=",
+              pvalue(X1, Y1))
+        print("Probability of X2 and Y1 under null hypothesis <=",
+              pvalue(X2, Y1))
     
     
