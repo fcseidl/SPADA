@@ -143,10 +143,35 @@ def doubleExpDropouts(Y, lam):
                     Y[n, l] = 0
 
 
+def simulateURSMdata():
+    """
+    Create a simulated joint dataset with same dimensions as URSM fetal brain 
+    data.
+    
+    Returns
+    -------
+    X : array, shape (273, 72)
+        bulk data
+    Y : array shape (273, 213)
+        single-cell data
+    """
+    N = 273
+    M = 72
+    L = 213
+    K = 3
+    lam = 0.1
+    alpha = [ 2e4, 1e4, 7e4 ]
+    A = randomA(N, K)
+    X = bulk(N, M, K, alpha, A=A)
+    Y = true_single_cell(N, L, K, alpha, A=A)
+    doubleExpDropouts(Y, lam)
+    return X, Y
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from ZIFA import ZIFA
-    from SPADAutil import ZIFApreprocessing
+    from preprocessing import ZIFApreprocessing
     np.set_printoptions(precision=3)
     
     N = 70

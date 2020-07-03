@@ -13,6 +13,7 @@ from sklearn.preprocessing import normalize
 from scipy.spatial import ConvexHull
 from scipy.optimize import linprog, nnls
 from statistics import variance
+from sklearn.decomposition import PCA
 
 
 def HullContainment(X, Y):
@@ -110,7 +111,7 @@ def fractionInsideCone(X, Y):
 
 def residualsToCone(X, Y):
     """
-    Compute bulk profiles' average normalized distance to conical hull.
+    Compute bulk profiles' average normalized l2 distance to conical hull.
 
     Parameters
     ----------
@@ -121,7 +122,8 @@ def residualsToCone(X, Y):
 
     Returns
     -------
-    Average over j of min ||X[:, j] - b|| / ||X[:, j]|| for b in cone(Y).
+    Average over j of min ||X[:, j] - b|| / ||X[:, j]|| for b in cone(Y). 
+    l2 norm is used.
     """
     M = X.shape[1]
     normalized_residuals = []
@@ -159,14 +161,48 @@ def pvalue(X, Y):
         
 
 if __name__ == "__main__":
-    # test with 3 cell line mixture data
+    import preprocessing
+    import simulations as sims
+    
+    # dimensionality-reduced simulated data with PCA
     if 1:
-        import preprocessing
+        print("Generating joint datasets X1, Y1, and X2, Y2...")
+        X1, Y1 = sims.simulateURSMdata()
+        X2, Y2 = sims.simulateURSMdata()
+        
+        print("Performing PCA on single-cell data...")
+        D = 200
+        pca = PCA(n_components=D)
+        Y1_hat = pca.fit_transform(Y1.T).T
+        
+        print("Transforming bulk data into feature space...")
+        X1_hat = pca.transform(X1.T).T
+        X2_hat = pca.transform(X2.T).T
+        
+        print('Are X1 and Y1 joint? Expect 0, receive', 
+              residualsToCone(X1_hat, Y1_hat))
+        print('Are X2 and Y1 joint? Expect > 0, receive', 
+              residualsToCone(X2_hat, Y1_hat))
+        
+        print("Probability of X1 and Y1 under null hypothesis <=",
+              pvalue(X1_hat, Y1_hat))
+        print("Probability of X2 and Y1 under null hypothesis <=",
+              pvalue(X2_hat, Y1_hat))
+        
+    
+    # test with real datasets
+    if 0:
         np.random.seed(0)
         
         # NOTE: these are local files which are unavailable on other machines
-        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv"
-        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_scESET.csv"
+        
+        # 3 cell line mixture
+        #bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv"
+        #scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_scESET.csv"
+        
+        # pancreatic islets data
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
         
         print("Reading full data matrices X and Y...")
         X = preprocessing.csvToMatrix(bulkfile)
@@ -210,26 +246,11 @@ if __name__ == "__main__":
               pvalue(X2, Y2))
     
     # test with simulated data
-    if 1:
-        import simulations as sims
-        #np.random.seed(34)
+    if 0:
+        print("Generating joint datasets X1, Y1, and X2, Y2...")
+        X1, Y1 = sims.simulateURSMdata()
+        X2, Y2 = sims.simulateURSMdata()
         
-        N = 273
-        M = 72
-        L = 213
-        K = 3
-        lam = 0.1
-        alpha = [ 2e4, 1e4, 7e4 ]
-        #alpha = [ 1e3 for _ in range(K) ]  # assumes symmetric Dirichlet prior
-        print("Simulating datasets...")
-        A1 = sims.randomA(N, K)
-        A2 = sims.randomA(N, K)
-        X1 = sims.bulk(N, M, K, alpha, A=A1)
-        X2 = sims.bulk(N, M, K, alpha, A=A2)
-        Y1 = sims.true_single_cell(N, L, K, alpha, A=A1)
-        sims.doubleExpDropouts(Y1, lam)
-        
-        print("using residuals of true data:")
         print('Are X1 and Y1 joint? Expect 0, receive', 
               residualsToCone(X1, Y1))
         print('Are X2 and Y1 joint? Expect > 0, receive', 
@@ -239,5 +260,24 @@ if __name__ == "__main__":
               pvalue(X1, Y1))
         print("Probability of X2 and Y1 under null hypothesis <=",
               pvalue(X2, Y1))
+    
+    # test 2 real datasets
+    if 0:
+        # bulk from 3cl, sc from islets
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
+        
+        print("Reading data matrices X and Y...")
+        X = preprocessing.csvToMatrix(bulkfile)
+        Y = preprocessing.csvToMatrix(scfile)
+        
+        N = X.shape[0]
+        assert(Y.shape[0] == N)
+        print("Number of genes:", N)
+        print("Number of bulk samples:", X.shape[1])
+        print("Number of single cells:", Y.shape[1])
+        
+        print("Computing bound for probability of residuals under null hypothesis...")
+        print("p <=", pvalue(X, Y))
     
     
