@@ -13,7 +13,7 @@ from sklearn.preprocessing import normalize
 from scipy.spatial import ConvexHull
 from scipy.optimize import linprog, nnls
 from statistics import variance
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, FactorAnalysis
 
 
 def HullContainment(X, Y):
@@ -135,7 +135,7 @@ def residualsToCone(X, Y):
 
 def pvalue(X, Y):
     """
-    Compute a bound for the probability of data under the null hypothesis that 
+    Compute a bound for the probability under the null hypothesis that 
     bulk and scRNA-seq data are totally unrelated.
 
     Parameters
@@ -164,8 +164,24 @@ if __name__ == "__main__":
     import preprocessing
     import simulations as sims
     
+    # test with simulated data
+    if 0:
+        print("Generating joint datasets X1, Y1, and X2, Y2...")
+        X1, Y1 = sims.simulateURSMdata()
+        X2, Y2 = sims.simulateURSMdata()
+        
+        print('Are X1 and Y1 joint? Expect 0, receive', 
+              residualsToCone(X1, Y1))
+        print('Are X2 and Y1 joint? Expect > 0, receive', 
+              residualsToCone(X2, Y1))
+        
+        print("Probability of X1 and Y1 under null hypothesis <=",
+              pvalue(X1, Y1))
+        print("Probability of X2 and Y1 under null hypothesis <=",
+              pvalue(X2, Y1))
+    
     # dimensionality-reduced simulated data with PCA
-    if 1:
+    if 0:
         print("Generating joint datasets X1, Y1, and X2, Y2...")
         X1, Y1 = sims.simulateURSMdata()
         X2, Y2 = sims.simulateURSMdata()
@@ -189,20 +205,44 @@ if __name__ == "__main__":
         print("Probability of X2 and Y1 under null hypothesis <=",
               pvalue(X2_hat, Y1_hat))
         
-    
-    # test with real datasets
+    # dimensionality-reduced simulated data with FA
     if 0:
+        print("Generating joint datasets X1, Y1, and X2, Y2...")
+        X1, Y1 = sims.simulateURSMdata()
+        X2, Y2 = sims.simulateURSMdata()
+        
+        print("Performing Factor Analysis on single-cell data...")
+        D = 25
+        fa = FactorAnalysis(n_components=D)
+        Y1_hat = fa.fit_transform(Y1.T).T
+        
+        print("Transforming bulk data into feature space...")
+        X1_hat = fa.transform(X1.T).T
+        X2_hat = fa.transform(X2.T).T
+        
+        print('Are X1 and Y1 joint? Expect 0, receive', 
+              residualsToCone(X1_hat, Y1_hat))
+        print('Are X2 and Y1 joint? Expect > 0, receive', 
+              residualsToCone(X2_hat, Y1_hat))
+        
+        print("Probability of X1 and Y1 under null hypothesis <=",
+              pvalue(X1_hat, Y1_hat))
+        print("Probability of X2 and Y1 under null hypothesis <=",
+              pvalue(X2_hat, Y1_hat))
+    
+    # test with two halves of a real dataset
+    if 1:
         np.random.seed(0)
         
         # NOTE: these are local files which are unavailable on other machines
         
         # 3 cell line mixture
-        #bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_bulkESET.csv"
-        #scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_MIX3cl_scESET.csv"
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
         
         # pancreatic islets data
-        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
-        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
+        #bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
+        #scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
         
         print("Reading full data matrices X and Y...")
         X = preprocessing.csvToMatrix(bulkfile)
@@ -244,22 +284,6 @@ if __name__ == "__main__":
               pvalue(X2, Y1))
         print("Probability of X2 and Y2 under null hypothesis <=",
               pvalue(X2, Y2))
-    
-    # test with simulated data
-    if 0:
-        print("Generating joint datasets X1, Y1, and X2, Y2...")
-        X1, Y1 = sims.simulateURSMdata()
-        X2, Y2 = sims.simulateURSMdata()
-        
-        print('Are X1 and Y1 joint? Expect 0, receive', 
-              residualsToCone(X1, Y1))
-        print('Are X2 and Y1 joint? Expect > 0, receive', 
-              residualsToCone(X2, Y1))
-        
-        print("Probability of X1 and Y1 under null hypothesis <=",
-              pvalue(X1, Y1))
-        print("Probability of X2 and Y1 under null hypothesis <=",
-              pvalue(X2, Y1))
     
     # test 2 real datasets
     if 0:

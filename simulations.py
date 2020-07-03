@@ -26,7 +26,7 @@ def categorical(p):
 
     Returns
     -------
-    A single sample from categorical distribution.
+    A single sample from the categorical distribution.
     """
     counts = np.random.multinomial(1, p)
     return list(counts).index(1)
@@ -172,6 +172,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from ZIFA import ZIFA
     from preprocessing import ZIFApreprocessing
+    from SPADAutil import marker_quality
     np.set_printoptions(precision=3)
     
     N = 70
@@ -203,5 +204,6 @@ if __name__ == "__main__":
     plt.xlabel('marker quality')
     plt.ylabel('variance across samples')
     '''
+    
     
     
