@@ -156,36 +156,3 @@ def findBlockExpressingNGenes(data, n_samps, n_expressed):
             return begin
     return -1
 
-
-if __name__ == "__main__":
-    # simple test for findBlockExpressingNGenes()
-    if 0:
-        data = np.array([[0, 1, 0, 2, 0, 3],
-                         [0, 0, 1, 2, 0, 3],
-                         [0, 1, 0, 0, 0, 0],
-                         [0, 1, 0, 0, 0, 3]])
-        print(findBlockExpressingNGenes(data, 1, 3))
-    
-    # try to find 72 12-13 PCW fetal prefrontal cortical cells in Kang data
-    if 0:
-        filename = (
-            "/Users/fcseidl/Downloads/GSE25219_DABG_pvalue.csv")
-        with open(filename) as readfile:
-            read_tsv = csv.reader(readfile, delimiter=",")
-            data = np.array([ row for row in read_tsv ])
-        data = data[1:, 1:]             # trim first row and col
-        data = data.astype(np.float)    # convert to floats
-        print(findBlockExpressingNGenes(data, 72, 16947))
-    
-    # begin preprocessing of Camp data by ignoring non-fetal cells 
-    if 0:
-        filename = (
-            "/Users/fcseidl/Downloads/GSE75140_hOrg.fetal.master.data.frame.txt")
-        print("Reading data from file...")
-        with open(filename) as readfile:
-            read_tsv = csv.reader(readfile, delimiter="\t")
-            data = np.array([ row for row in read_tsv ])
-        print(data)
-        print("Removed rows of data not from fetal cells:")
-        data = data[-226:]
-        print(data)

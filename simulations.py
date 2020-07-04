@@ -166,44 +166,5 @@ def simulateURSMdata():
     Y = true_single_cell(N, L, K, alpha, A=A)
     doubleExpDropouts(Y, lam)
     return X, Y
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    from ZIFA import ZIFA
-    from preprocessing import ZIFApreprocessing
-    from SPADAutil import marker_quality
-    np.set_printoptions(precision=3)
-    
-    N = 70
-    M = 20
-    L = 100
-    K = 4
-    lam = 0.1
-    alpha = [ 1 for _ in range(K) ]
-    #alpha = [9, 16, 0.3, 6]
-    
-    A = randomA(N, K)
-    X = bulk(N, M, K, alpha, A=A)
-    Y = true_single_cell(N, L, K, alpha, A=A)
-    print("noiseless bulk data:\n", X)
-    print("noiseless single-cell data, no dropouts:\n", Y)
-    doubleExpDropouts(Y, lam)
-    print("single-cell data after dropouts:\n", Y)
-    
-    Y = ZIFApreprocessing(Y)
-    Z, params = ZIFA.fitModel(Y, K)
-    print("ZIFA estimated latent positions:\n", Z)
-    
-    '''
-    mq = marker_quality(A)
-    plt.scatter(
-        [ max(mqn) for mqn in mq ],
-        [ np.var(Xn) for Xn in X ]
-        )
-    plt.xlabel('marker quality')
-    plt.ylabel('variance across samples')
-    '''
-    
     
     
