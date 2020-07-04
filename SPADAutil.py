@@ -10,7 +10,7 @@ Various auxiliary methods for SPADA research.
 
 import numpy as np
 from scipy.optimize import linprog
-        
+   
 
 def marker_quality(A):
     """

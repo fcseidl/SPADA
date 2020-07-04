@@ -150,7 +150,7 @@ def pvalue(X, Y):
     """
     true_residuals = residualsToCone(X, Y)   # true order
     permuted_residuals = []
-    for n in range(20):     # TODO: magic number here...
+    for n in range(15):     # TODO: magic number here...
         X_permuted = np.random.permutation(X)
         permuted_residuals.append(residualsToCone(X_permuted, Y))
     exp = np.mean(permuted_residuals)
@@ -286,15 +286,32 @@ if __name__ == "__main__":
     
     # test 2 real datasets
     if 1:
-        # 3 cell line mixture
-        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
-        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
+        print("---Loading datasets---")
         
         '''
-        # bulk from 3cl, sc from islets
+        print("Bulk: pancreatic islets")
+        print("Single-cell: pancreatic islets")
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
+        '''
+        '''
+        print("Bulk: 3cl mixture")
+        print("Single-cell: 3cl mixture")
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
+        '''
+        '''
+        print("Bulk: 3cl mixture")
+        print("Single-cell: pancreatic islets")
         bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_bulk.csv"
         scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
         '''
+        
+        print("Bulk: pancreatic islets")
+        print("Single-cell: 3cl mixture")
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_sc.csv"
+        
         
         print("Reading data matrices X and Y...")
         X = preprocessing.csvToMatrix(bulkfile)
@@ -306,22 +323,23 @@ if __name__ == "__main__":
         print("Number of bulk samples:", X.shape[1])
         print("Number of single cells:", Y.shape[1])
         
-        '''
-        print("Removing genes with low variance relative to expectation...")
-        def V_below_E(Yn):
-            return np.var(Yn) < Yn.mean()
-        X, Y = preprocessing.removeRowsPred(X, Y, V_below_E)
+        print("---Performing hypothesis testing---")
+        
         '''
         print("Removing genes with low variance...")
         def lowVariance(Yn):
-            return np.var(Yn) < 15  # TODO: magic number
+            return np.var(Yn) < 50  # TODO: magic number
         X, Y = preprocessing.removeRowsPred(X, Y, lowVariance)
         
         N = X.shape[0]
         assert(Y.shape[0] == N)
         print("Number of remaining genes:", N)
+        '''
         
-        print("Computing bound for probability of residuals under null hypothesis...")
+        print("Scaling genes by variance...")
+        X, Y = preprocessing.scaleRowsByVariance(X, Y)
+        
+        print("Estimating bound for probability of residuals under null hypothesis...")
         print("p <=", pvalue(X, Y))
     
     

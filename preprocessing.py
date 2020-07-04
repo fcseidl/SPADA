@@ -29,7 +29,7 @@ def ZIFApreprocessing(Y):
     # remove zero cols
     L = L0 = Y.shape[1]
     l = 0
-    while l < L:
+    while l < L:    # TODO: terrible slow way too do this
         if Y[:, l].sum() < 1e-6:
             Y = np.delete(Y, l, axis=1)
             L -= 1
@@ -95,6 +95,34 @@ def removeRowsPred(X, Y, pred):
         if pred(Y[n]): indices.append(n)
     X = np.delete(X, indices, axis=0)
     Y = np.delete(Y, indices, axis=0)
+    return X, Y
+
+
+def scaleRowsByVariance(X, Y):
+    """
+    Scale rows of bulk and scRNA-seq data matrices to weight genes by variance.
+
+    Parameters
+    ----------
+    X : array, shape (N, M)
+        bulk data matrix
+    Y : array, shape (N, L)
+        single-cell data matrix
+
+    Returns
+    -------
+    X, Y, where each row is scaled in proportion to the original variance of 
+    that gene in Y.
+    """
+    # L-inifinity normalized variances
+    var = np.array([ np.var(Yn) for Yn in Y ])
+    var /= max(var)
+    
+    # multiply X, Y by diag(var) TODO: could be done faster...
+    V = np.diag(var)
+    X = V.dot(X)
+    Y = V.dot(Y)
+    
     return X, Y
             
 
