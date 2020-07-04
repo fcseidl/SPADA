@@ -31,8 +31,7 @@ def ZIFApreprocessing(Y):
     l = 0
     while l < L:
         if Y[:, l].sum() < 1e-6:
-            Y[:, l] = Y[:, -1]  # replace zero col with last col
-            Y = Y[:, :-1]       # cut off duplicate last col
+            Y = np.delete(Y, l, axis=1)
             L -= 1
         else:
             l += 1
@@ -72,6 +71,32 @@ def csvToMatrix(filename, delim=','):
     result = result.astype(np.float)
     return result
 
+
+def removeRowsPred(X, Y, pred):
+    """
+    Remove rows of bulk and scRNA-seq data matrices according to a predicate.
+
+    Parameters
+    ----------
+    X : array, shape (N, M)
+        bulk data matrix
+    Y : array, shape (N, L)
+        single-cell data matrix
+    pred : function
+        Predicate to indicate that a row should be removed
+
+    Returns
+    -------
+    X, Y modified to exclude rows n where pred(Y[n]) is True.
+    """
+    N = Y.shape[0]
+    indices = []
+    for n in range(N):
+        if pred(Y[n]): indices.append(n)
+    X = np.delete(X, indices, axis=0)
+    Y = np.delete(Y, indices, axis=0)
+    return X, Y
+            
 
 def findBlockExpressingNGenes(data, n_samps, n_expressed):
     """

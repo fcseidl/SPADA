@@ -12,7 +12,6 @@ import numpy as np
 from sklearn.preprocessing import normalize
 from scipy.spatial import ConvexHull
 from scipy.optimize import linprog, nnls
-from statistics import variance
 from sklearn.decomposition import PCA, FactorAnalysis
 
 
@@ -151,12 +150,12 @@ def pvalue(X, Y):
     """
     true_residuals = residualsToCone(X, Y)   # true order
     permuted_residuals = []
-    for n in range(10):     # TODO: magic number here...
+    for n in range(20):     # TODO: magic number here...
         X_permuted = np.random.permutation(X)
         permuted_residuals.append(residualsToCone(X_permuted, Y))
     exp = np.mean(permuted_residuals)
     a = np.abs(exp - true_residuals)
-    var = variance(permuted_residuals)
+    var = np.var(permuted_residuals)
     return var / (a ** 2)   # Chebyshev bound
         
 
@@ -231,7 +230,7 @@ if __name__ == "__main__":
               pvalue(X2_hat, Y1_hat))
     
     # test with two halves of a real dataset
-    if 1:
+    if 0:
         np.random.seed(0)
         
         # NOTE: these are local files which are unavailable on other machines
@@ -286,10 +285,16 @@ if __name__ == "__main__":
               pvalue(X2, Y2))
     
     # test 2 real datasets
-    if 0:
+    if 1:
+        # 3 cell line mixture
+        bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
+        
+        '''
         # bulk from 3cl, sc from islets
         bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_bulk.csv"
         scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
+        '''
         
         print("Reading data matrices X and Y...")
         X = preprocessing.csvToMatrix(bulkfile)
@@ -300,6 +305,21 @@ if __name__ == "__main__":
         print("Number of genes:", N)
         print("Number of bulk samples:", X.shape[1])
         print("Number of single cells:", Y.shape[1])
+        
+        '''
+        print("Removing genes with low variance relative to expectation...")
+        def V_below_E(Yn):
+            return np.var(Yn) < Yn.mean()
+        X, Y = preprocessing.removeRowsPred(X, Y, V_below_E)
+        '''
+        print("Removing genes with low variance...")
+        def lowVariance(Yn):
+            return np.var(Yn) < 15  # TODO: magic number
+        X, Y = preprocessing.removeRowsPred(X, Y, lowVariance)
+        
+        N = X.shape[0]
+        assert(Y.shape[0] == N)
+        print("Number of remaining genes:", N)
         
         print("Computing bound for probability of residuals under null hypothesis...")
         print("p <=", pvalue(X, Y))

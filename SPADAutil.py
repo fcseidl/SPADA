@@ -74,10 +74,32 @@ def scaledSolidAngle(Y):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     
-    print(scaledSolidAngle(np.array([[1, 3, 2],
-                                     [2, 1, 3],
-                                     [3, 2, 1]])))
+    # Plot description of variances of gene expressions in real scRNA-seq data
+    if 1:
+        import preprocessing
+        
+        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
+        
+        print("Reading single-cell data matrix Y...")
+        Y = preprocessing.csvToMatrix(scfile)
+        
+        '''
+        n = 400
+        indices = set([ np.random.randint(Y.shape[0]) for _ in range(n) ])
+        '''
+        indices = np.arange(Y.shape[0])
+        
+        print("Computing variances for", len(indices), "random genes..." )
+        V = [ np.var(Y[l]) for l in indices ]
+        V.sort()
+        
+        print("Plotting variances...")
+        plt.plot(np.arange(len(V)), V)
+        plt.xlabel("gene")
+        plt.ylabel("variance")
     
+    # assess solid angle of original and PCA cones for simulated single-cell 
+    # data
     if 0:
         import simulations as sims
         from sklearn.decomposition import PCA
