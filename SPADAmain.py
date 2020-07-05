@@ -20,59 +20,33 @@ import SPADAutil as util
 
 # hypothesis testing with 2 real datasets
 if 1:
-    print("---Loading datasets---")
-    
-    
     print("Bulk: pancreatic islets")
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
+    hp.identifyJointDatasets(bulkfile, scfile)
+    print()
     
-    '''
     print("Bulk: 3cl mixture")
     print("Single-cell: 3cl mixture")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
-    '''
-    '''
+    hp.identifyJointDatasets(bulkfile, scfile)
+    print()
+    
     print("Bulk: 3cl mixture")
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
-    '''
-    '''
+    hp.identifyJointDatasets(bulkfile, scfile)
+    print()
+    
     print("Bulk: pancreatic islets")
     print("Single-cell: 3cl mixture")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_sc.csv"
-    '''
-    
-    print("Reading data matrices X and Y...")
-    X = preprocessing.csvToMatrix(bulkfile)
-    Y = preprocessing.csvToMatrix(scfile)
-    
-    N = X.shape[0]
-    assert(Y.shape[0] == N)
-    print("Number of genes:", N)
-    print("Number of bulk samples:", X.shape[1])
-    print("Number of single cells:", Y.shape[1])
-    
-    print("---Performing hypothesis testing---")
-    
-    print("Removing genes with low variance...")
-    def lowVariance(Yn):
-        return np.var(Yn) < 80  # TODO: magic number
-    X, Y = preprocessing.removeRowsPred(X, Y, lowVariance)
-    
-    N = X.shape[0]
-    assert(Y.shape[0] == N)
-    print("Number of remaining genes:", N)
-    
-    print("Scaling genes by variance...")
-    X, Y = preprocessing.scaleRowsByVariance(X, Y)
-    
-    print("Estimating bound for probability of residuals under null hypothesis...")
-    print("p <=", hp.pvalue(X, Y))
+    hp.identifyJointDatasets(bulkfile, scfile)
+    print()
 
 # hypothesis testing with simulated data
 if 0:

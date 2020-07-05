@@ -9,103 +9,8 @@ Tests to decide whether bulk and scRNA-seq datasets are joint.
 """
 
 import numpy as np
-from sklearn.preprocessing import normalize
-from scipy.spatial import ConvexHull
-from scipy.optimize import linprog, nnls
-from sklearn.decomposition import PCA, FactorAnalysis
-
-
-def HullContainment(X, Y):
-    """
-    NOTE: false negatives are too likely with this method.
-    
-    Check that bulk and scRNA-seq data matrices are joint by verifying that 
-    bulk profiles are inside convex hull of single-cell profiles.
-
-    Parameters
-    ----------
-    X : array, shape (N, M)
-        bulk data matrix
-    Y : array, shape (N, L)
-        single-cell data matrix
-
-    Returns
-    -------
-    Whether normalized columns of X are convex combinations of normalized 
-    columns of Y.
-    """
-    M = X.shape[1]
-    # preprocessing: tranpose and normalize
-    X = normalize(X.T, norm='l1')
-    Y = normalize(Y.T, norm='l1')
-    # convex hull should have only vertices from Y
-    points = np.r_[X, Y]
-    hull = ConvexHull(points, incremental=False, qhull_options='QJ QbB')
-    vertices = np.unique(hull.simplices.ravel())
-    return (vertices >= M).all()
-
-
-def fractionInsideHull(X, Y):
-    """
-    NOTE: fractionInsideCone is more efficient and less likely to produce
-    OptimizeWarnings.
-    
-    Count fraction of normalized bulk RNA-seq profiles which are convex 
-    combinations of normalized single cell profiles.
-
-    Parameters
-    ----------
-    X : array, shape (N, M)
-        bulk data matrix
-    Y : array, shape (N, L)
-        single-cell data matrix
-
-    Returns
-    -------
-    Fraction of normalized columns of X which are inside convex hull of 
-    normalized Y columns.
-    """
-    M = X.shape[1]
-    L = Y.shape[1]
-    # preprocessing: normalization
-    X = normalize(X, norm='l1', axis=0)
-    Y = normalize(Y, norm='l1', axis=0)
-    count = 0
-    for j in range(M):  # see if X[:, j] is a convex combination of Y cols
-        c = np.zeros(L)
-        # add additional equality constraint to make combination convex
-        # (this constraint is redundant)
-        A_equation = np.r_[Y, np.ones((1, L))]
-        b_equation = np.r_[X[:, j], np.ones(1)]
-        lp = linprog(c, A_eq=A_equation, b_eq=b_equation)
-        if lp.success: count += 1
-    return count / M
-
-
-def fractionInsideCone(X, Y):
-    """
-    Count fraction of bulk RNA-seq profiles which are conical combinations of
-    single cell profiles.
-
-    Parameters
-    ----------
-    X : array, shape (N, M)
-        bulk data matrix
-    Y : array, shape (N, L)
-        single-cell data matrix
-
-    Returns
-    -------
-    Fraction of columns of X which are inside conical hull of columns of Y.
-    """
-    M = X.shape[1]
-    L = Y.shape[1]
-    count = 0
-    for j in range(M):  # see if X[:, j] is a conical combination of Y cols
-        c = np.zeros(L)
-        lp = linprog(c, A_eq=Y, b_eq=X[:, j])
-        if lp.success: count += 1
-    return count / M
+import preprocessing
+from scipy.optimize import  nnls
 
 
 def residualsToCone(X, Y):
@@ -157,5 +62,56 @@ def pvalue(X, Y):
     a = np.abs(exp - true_residuals)
     var = np.var(permuted_residuals)
     return var / (a ** 2)   # Chebyshev bound
+
+
+def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
+    """
+    Read bulk and scRNA-seq data from csv files and calculate p-value.
+
+    Parameters
+    ----------
+    bulkfile : path to bulk data file
+    scfile : path to single-cell data file
+    delim : character, optional
+        Separating character in file format. The default is ','.
+    quiet : bool, optional
+        True prevents additional messages from printing. The default is False.
+
+    Returns
+    -------
+    Chebyshev bound for probability that conic residuals are below their 
+    observed values under null hypothesis.
+    """
+    print("---Loading datasets---")
+    
+    print("Reading data matrices X and Y...")
+    X = preprocessing.csvToMatrix(bulkfile)
+    Y = preprocessing.csvToMatrix(scfile)
+    
+    N = X.shape[0]
+    assert(Y.shape[0] == N)
+    print("Number of genes:", N)
+    print("Number of bulk samples:", X.shape[1])
+    print("Number of single cells:", Y.shape[1])
+    
+    print("---Performing hypothesis testing---")
+    
+    print("Removing genes with low variance...")
+    def lowVariance(Yn):
+        return np.var(Yn) < 80  # TODO: magic number
+    X, Y = preprocessing.removeRowsPred(X, Y, lowVariance)
+    
+    N = X.shape[0]
+    assert(Y.shape[0] == N)
+    print("Number of remaining genes:", N)
+    
+    print("Scaling genes by variance...")
+    X, Y = preprocessing.scaleRowsByVariance(X, Y)
+    
+    print("Estimating bound for probability of residuals under null hypothesis...")
+    p = pvalue(X, Y)
+    print("p <=", p)
+    
+    return p
 
     

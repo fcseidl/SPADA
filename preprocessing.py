@@ -124,35 +124,4 @@ def scaleRowsByVariance(X, Y):
     Y = V.dot(Y)
     
     return X, Y
-            
-
-def findBlockExpressingNGenes(data, n_samps, n_expressed):
-    """
-    Search data for contiguous block of n_samps samples which express exactly 
-    n_expressed genes collectively.
-
-    Parameters
-    ----------
-    data : array, shape (N, M)
-        Data matrix for N genes and M samples.
-    n_samps : int
-        Desired number of samples
-    n_expressed : TYPE
-       Desired number of genes expressed in samples.
-
-    Returns
-    -------
-    If a satisfactory block exists, the index of the first sample in the block,
-    otherwise -1.
-    
-    NOTE: slow, complexity O(N * M * n_samps).
-    """
-    N, M = data.shape
-    assert n_samps <= M and n_expressed <= N
-    for begin in range(M - n_samps + 1):
-        block = data[:, begin:begin + n_samps]
-        nonzero = block[np.any(block, axis=1)]
-        if nonzero.shape[0] == n_expressed:
-            return begin
-    return -1
 
