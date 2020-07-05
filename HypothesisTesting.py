@@ -83,39 +83,39 @@ def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     observed values under null hypothesis.
     """
     # conditional print
-    def printIf(args):
+    def printIf(*args):
         if not quiet:
             print(*args)
         
-    printIf(("---Loading datasets---"))
+    printIf("---Loading datasets---")
     
-    printIf(("Reading data matrices X and Y..."))
+    printIf("Reading data matrices X and Y...")
     X = preprocessing.csvToMatrix(bulkfile, delim)
     Y = preprocessing.csvToMatrix(scfile, delim)
     
     N = X.shape[0]
     assert(Y.shape[0] == N)
-    printIf(("Number of genes:", N))
-    printIf(("Number of bulk samples:", X.shape[1]))
-    printIf(("Number of single cells:", Y.shape[1]))
+    printIf("Number of genes:", N)
+    printIf("Number of bulk samples:", X.shape[1])
+    printIf("Number of single cells:", Y.shape[1])
     
-    printIf(("---Performing hypothesis testing---"))
+    printIf("---Performing hypothesis testing---")
     
-    printIf(("Removing genes with low variance..."))
+    printIf("Removing genes with low variance...")
     def lowVariance(Yn):
         return np.var(Yn) < 80  # TODO: magic number
     X, Y = preprocessing.removeRowsPred(X, Y, lowVariance)
     
     N = X.shape[0]
     assert(Y.shape[0] == N)
-    printIf(("Number of remaining genes:", N))
+    printIf("Number of remaining genes:", N)
     
-    printIf(("Scaling genes by variance..."))
+    printIf("Scaling genes by variance...")
     X, Y = preprocessing.scaleRowsByVariance(X, Y)
     
-    printIf(("Estimating bound for probability of residuals under null hypothesis..."))
+    printIf("Estimating bound for probability of residuals under null hypothesis...")
     p = pvalue(X, Y)
-    printIf(("p <=", p))
+    printIf("p <=", p)
     
     return p
 

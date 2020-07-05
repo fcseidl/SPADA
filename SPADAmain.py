@@ -20,10 +20,21 @@ import SPADAutil as util
 
 # how much variance is explained by principal components?
 if 1:
-    print("test not implemented")
+    print("Dataset: pancreatic islets single cell")
+    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
+    
+    print("Reading data matrix Y...")
+    Y = preprocessing.csvToMatrix(scfile)
+    
+    print("Performing PCA...")
+    pca = PCA(n_components=0.9)   # Explain at least 90% of variance
+    pca.fit(Y.T)
+    
+    print("Inferred dimensionality:", pca.components_.shape[0])
+    print("Explained percentages of variance:", pca.explained_variance_ratio)
     
 # how much variance is explained by each gene?
-if 1:
+if 0:
     print("test not implemented")
 
 # hypothesis testing with 2 real datasets
@@ -88,14 +99,14 @@ if 0:
     X2_hat = pca.transform(X2.T).T
     
     print('Are X1 and Y1 joint? Expect 0, receive', 
-          hp.residualsToCone(X1_hat, Y1_hat))
+          ht.residualsToCone(X1_hat, Y1_hat))
     print('Are X2 and Y1 joint? Expect > 0, receive', 
-          hp.residualsToCone(X2_hat, Y1_hat))
+          ht.residualsToCone(X2_hat, Y1_hat))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          hp.pvalue(X1_hat, Y1_hat))
+          ht.pvalue(X1_hat, Y1_hat))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          hp.pvalue(X2_hat, Y1_hat))
+          ht.pvalue(X2_hat, Y1_hat))
     
 # hypothesis testing on dimensionality-reduced simulated data with FA
 if 0:
@@ -113,14 +124,14 @@ if 0:
     X2_hat = fa.transform(X2.T).T
     
     print('Are X1 and Y1 joint? Expect 0, receive', 
-          hp.residualsToCone(X1_hat, Y1_hat))
+          ht.residualsToCone(X1_hat, Y1_hat))
     print('Are X2 and Y1 joint? Expect > 0, receive', 
-          hp.residualsToCone(X2_hat, Y1_hat))
+          ht.residualsToCone(X2_hat, Y1_hat))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          hp.pvalue(X1_hat, Y1_hat))
+          ht.pvalue(X1_hat, Y1_hat))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          hp.pvalue(X2_hat, Y1_hat))
+          ht.pvalue(X2_hat, Y1_hat))
 
 # hypothesis testing with two halves of a real dataset
 if 0:
@@ -160,22 +171,22 @@ if 0:
     Y2 = Y[halfway:]
 
     print("Are X1 and Y1 joint? Expect 0, receive",
-          hp.residualsToCone(X1, Y1))
+          ht.residualsToCone(X1, Y1))
     print("Are X1 and Y2 joint? Expect > 0, receive",
-          hp.residualsToCone(X1, Y2))
+          ht.residualsToCone(X1, Y2))
     print("Are X2 and Y1 joint? Expect > 0, receive",
-          hp.residualsToCone(X2, Y1))
+          ht.residualsToCone(X2, Y1))
     print("Are X2 and Y2 joint? Expect 0, receive",
-          hp.residualsToCone(X2, Y2))
+          ht.residualsToCone(X2, Y2))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          hp.pvalue(X1, Y1))
+          ht.pvalue(X1, Y1))
     print("Probability of X1 and Y2 under null hypothesis <=",
-          hp.pvalue(X1, Y2))
+          ht.pvalue(X1, Y2))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          hp.pvalue(X2, Y1))
+          ht.pvalue(X2, Y1))
     print("Probability of X2 and Y2 under null hypothesis <=",
-          hp.pvalue(X2, Y2))
+          ht.pvalue(X2, Y2))
 
 # perform ZIFA on simulated data
 if 0:
@@ -192,12 +203,12 @@ if 0:
     alpha = [ 1 for _ in range(K) ]
     #alpha = [9, 16, 0.3, 6]
     
-    A = randomA(N, K)
-    X = bulk(N, M, K, alpha, A=A)
-    Y = true_single_cell(N, L, K, alpha, A=A)
+    A = sims.randomA(N, K)
+    X = sims.bulk(N, M, K, alpha, A=A)
+    Y = sims.true_single_cell(N, L, K, alpha, A=A)
     print("noiseless bulk data:\n", X)
     print("noiseless single-cell data, no dropouts:\n", Y)
-    doubleExpDropouts(Y, lam)
+    sims.doubleExpDropouts(Y, lam)
     print("single-cell data after dropouts:\n", Y)
     
     Y = ZIFApreprocessing(Y)
@@ -252,12 +263,14 @@ if 0:
         pca = PCA(n_components=D)
         Y_hat = pca.fit_transform(Y.T).T
         
-        print("Scaled solid angle of original cone ~=", scaledSolidAngle(Y))
-        print("SSA of cone in PCA feature space ~=", scaledSolidAngle(Y_hat))
+        print("Scaled solid angle of original cone ~=", 
+              util.scaledSolidAngle(Y))
+        print("SSA of cone in PCA feature space ~=", 
+              util.scaledSolidAngle(Y_hat))
     
     # sample from 2d unit sphere first quadrant
     if 0:
-        points = uniformFromUnitSphere(2, 200)
+        points = util.uniformFromUnitSphere(2, 200)
         
         # reflect to positive orthant
         points = np.abs(points)
@@ -270,7 +283,7 @@ if 0:
     
     # sample from 3d unit sphere positive orthant
     if 0:
-        points = uniformFromUnitSphere(3, 200)
+        points = util.uniformFromUnitSphere(3, 200)
         
         # reflect to positive orthant
         points = np.abs(points)
@@ -317,8 +330,10 @@ if 0:
     pca = PCA(n_components=D)
     Y_hat = pca.fit_transform(Y.T).T
     
-    print("Scaled solid angle of original cone ~=", scaledSolidAngle(Y))
-    print("SSA of cone in PCA feature space ~=", scaledSolidAngle(Y_hat))
+    print("Scaled solid angle of original cone ~=", 
+          util.scaledSolidAngle(Y))
+    print("SSA of cone in PCA feature space ~=", 
+          util.scaledSolidAngle(Y_hat))
 
 # sample from 2d unit sphere first quadrant
 if 0:
