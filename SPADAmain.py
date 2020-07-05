@@ -15,37 +15,45 @@ import csv
 
 import preprocessing
 import simulations as sims
-import HypothesisTesting as hp
+import HypothesisTesting as ht
 import SPADAutil as util
 
-# hypothesis testing with 2 real datasets
+# how much variance is explained by principal components?
 if 1:
+    print("test not implemented")
+    
+# how much variance is explained by each gene?
+if 1:
+    print("test not implemented")
+
+# hypothesis testing with 2 real datasets
+if 0:
     print("Bulk: pancreatic islets")
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
-    hp.identifyJointDatasets(bulkfile, scfile)
+    ht.identifyJointDatasets(bulkfile, scfile)
     print()
     
     print("Bulk: 3cl mixture")
     print("Single-cell: 3cl mixture")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
-    hp.identifyJointDatasets(bulkfile, scfile)
+    ht.identifyJointDatasets(bulkfile, scfile)
     print()
     
     print("Bulk: 3cl mixture")
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
-    hp.identifyJointDatasets(bulkfile, scfile)
+    ht.identifyJointDatasets(bulkfile, scfile)
     print()
     
     print("Bulk: pancreatic islets")
     print("Single-cell: 3cl mixture")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_sc.csv"
-    hp.identifyJointDatasets(bulkfile, scfile)
+    ht.identifyJointDatasets(bulkfile, scfile)
     print()
 
 # hypothesis testing with simulated data
