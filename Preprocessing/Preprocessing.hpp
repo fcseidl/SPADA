@@ -21,7 +21,8 @@
 #include <unordered_map>
 
 
-const char * DEFAULT_DELIMS = ", \t";
+const char DEFAULT_DELIM = ',';
+
 
 /*
  Return string containing first token of a line.
@@ -29,21 +30,42 @@ const char * DEFAULT_DELIMS = ", \t";
 std::string first_token(std::string line, const char * delims);
 
 
-/*
- Take two csv files small_in and large_in. For fastest performance,
- the file with fewer rows should be first. Write two new csv files,
- small_out and large_out, containing rows of small_in and large_in
- whose names (first tokens) appear in both files, in lexicographical
- sorted order. Row names must be unique.
- 
- Runtime: linear in lengths of files, log-linear in number of shared
- row names.
- */
-void sorted_shared_features(const std::string &small_in,
-                            const std::string &small_out,
-                            const std::string &large_in,
-                            const std::string &large_out,
-                            const char * delims);
+// Combines data from two different csv files.
+class csvJoiner {
+    char delim;
+    
+    // map row names to rows
+    std::unordered_map<std::string, std::string> rows_hash;
+    std::map<std::string, std::string> rows_bst;
+    
+public:
+    
+    /*
+     Create a csvJoiner of two csv files.
+     */
+    csvJoiner(std::string &small,
+              std::string &large,
+              char delim);
+    
+    /*
+     Write a new csv file, out, with a row for each row name that is
+     in both small and large. Each row is a concatenation of the corresponding
+     rows in small andlarge. The first row of the file contains two values,
+     [number of samples in small], [number of samples in large].
+     */
+    void join(std::string &out) const;
+    
+    /*
+     Write two new csv files, small_out and large_out, containing rows of
+     small and large whose names (first tokens) appear in both files,
+     in lexicographical sorted order. Row names must be unique.
+     
+     Runtime: linear in lengths of files, log-linear in number of shared
+     row names.
+     */
+    void sorted_shared_features(const std::string &small_out,
+                                const std::string &large_out) const;
+}; // csvJoiner
 
 
 /*
@@ -72,21 +94,16 @@ the following format:
 
 The size of the corner squares printed is determined by the parameter
 num. If num is larger than half the number of rows or columns, then
-entire rows or columns are printed without ellipses.
+entire rows or columns are printed without ellipses. Optionally, the
+first rows can be ignored.
 
 Finally, print the dimensions of the array.
 
 Single-pass, O(num^2) space.
 */
-void print_corners(int num, const std::string &filename, const char * delims);
-
-
-///*
-// Read a 2d array from stdin, and print its first column to stdout.
-// Columns delimiting characters are in the parameter delims.
-//
-// Single-pass.
-//*/
-//void print_first_col();
+void print_corners(unsigned int num,
+                   const std::string &filename,
+                   const char * delims,
+                   unsigned int ignore_rows = 0);
 
 #endif /* Preprocessing_hpp */
