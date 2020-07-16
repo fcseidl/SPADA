@@ -12,6 +12,7 @@ import numpy as np
 from sklearn.decomposition import PCA, FactorAnalysis
 import matplotlib.pyplot as plt
 import csv
+from sklearn.preprocessing import normalize
 
 import preprocessing
 import simulations as sims
@@ -19,9 +20,13 @@ import HypothesisTesting as ht
 import SPADAutil as util
 
 # how much variance is explained by principal components?
-if 1:
+if 0:
+    '''
     print("Dataset: pancreatic islets single cell")
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
+    '''
+    print("Dataset: 3cl single cell")
+    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
     
     print("Reading data matrix Y...")
     Y = preprocessing.csvToMatrix(scfile)
@@ -31,11 +36,7 @@ if 1:
     pca.fit(Y.T)
     
     print("Inferred dimensionality:", pca.components_.shape[0])
-    print("Explained percentages of variance:", pca.explained_variance_ratio)
-    
-# how much variance is explained by each gene?
-if 0:
-    print("test not implemented")
+    print("Explained percentages of variance:", pca.explained_variance_ratio_)
 
 # hypothesis testing with 2 real datasets
 if 0:
@@ -73,15 +74,29 @@ if 0:
     X1, Y1 = sims.simulateURSMdata()
     X2, Y2 = sims.simulateURSMdata()
     
+    '''
+    print("Log-tranforming...")
+    X1 = np.log(X1 + 1)
+    X2 = np.log(X2 + 1)
+    Y1 = np.log(Y1 + 1)
+    '''
+    
+    print("Monotonically tranforming...")
+    c = 10
+    X1 = sims.g_star(X1, c)
+    X2 = sims.g_star(X2, c)
+    Y1 = sims.g_star(Y1, c)
+    
+    
     print('Are X1 and Y1 joint? Expect 0, receive', 
-          hp.residualsToCone(X1, Y1))
+          ht.residualsToCone(X1, Y1))
     print('Are X2 and Y1 joint? Expect > 0, receive', 
-          hp.residualsToCone(X2, Y1))
+          ht.residualsToCone(X2, Y1))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          hp.pvalue(X1, Y1))
+          ht.pvalue(X1, Y1))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          hp.pvalue(X2, Y1))
+          ht.pvalue(X2, Y1))
 
 # hypothesis testing on dimensionality-reduced simulated data with PCA
 if 0:
@@ -90,7 +105,7 @@ if 0:
     X2, Y2 = sims.simulateURSMdata()
     
     print("Performing PCA on single-cell data...")
-    D = 200
+    D = 0.999999
     pca = PCA(n_components=D)
     Y1_hat = pca.fit_transform(Y1.T).T
     
@@ -226,79 +241,9 @@ if 0:
     '''
     
 # Plot description of variances of gene expressions in real scRNA-seq data
-    if 1:
-        import preprocessing
-        
-        scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
-        
-        print("Reading single-cell data matrix Y...")
-        Y = preprocessing.csvToMatrix(scfile)
-        
-        '''
-        n = 400
-        indices = set([ np.random.randint(Y.shape[0]) for _ in range(n) ])
-        '''
-        indices = np.arange(Y.shape[0])
-        
-        print("Computing variances for", len(indices), "random genes..." )
-        V = [ np.var(Y[l]) for l in indices ]
-        V.sort()
-        
-        print("Plotting variances...")
-        plt.plot(np.arange(len(V)), V)
-        plt.xlabel("gene")
-        plt.ylabel("variance")
-    
-    # assess solid angle of original and PCA cones for simulated single-cell 
-    # data
-    if 0:
-        import simulations as sims
-        from sklearn.decomposition import PCA
-        
-        print("Generating joint datasets X1, Y1, and X2, Y2...")
-        X, Y = sims.simulateURSMdata()
-        
-        print("Performing PCA on single-cell data...")
-        D = 206
-        pca = PCA(n_components=D)
-        Y_hat = pca.fit_transform(Y.T).T
-        
-        print("Scaled solid angle of original cone ~=", 
-              util.scaledSolidAngle(Y))
-        print("SSA of cone in PCA feature space ~=", 
-              util.scaledSolidAngle(Y_hat))
-    
-    # sample from 2d unit sphere first quadrant
-    if 0:
-        points = util.uniformFromUnitSphere(2, 200)
-        
-        # reflect to positive orthant
-        points = np.abs(points)
-        
-        # 2d case
-        plt.scatter(
-            points[:, 0],
-            points[:, 1],
-            )
-    
-    # sample from 3d unit sphere positive orthant
-    if 0:
-        points = util.uniformFromUnitSphere(3, 200)
-        
-        # reflect to positive orthant
-        points = np.abs(points)
-        
-        # 3d case
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(
-            points[:, 0],
-            points[:, 1],
-            points[:, 2]
-            )
-    
-# Plot description of variances of gene expressions in real scRNA-seq data
 if 0:
+    import preprocessing
+    
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
     
     print("Reading single-cell data matrix Y...")
@@ -322,11 +267,88 @@ if 0:
 # assess solid angle of original and PCA cones for simulated single-cell 
 # data
 if 0:
+    import simulations as sims
+    from sklearn.decomposition import PCA
+    
     print("Generating joint datasets X1, Y1, and X2, Y2...")
     X, Y = sims.simulateURSMdata()
     
     print("Performing PCA on single-cell data...")
     D = 206
+    pca = PCA(n_components=D)
+    Y_hat = pca.fit_transform(Y.T).T
+    
+    print("Scaled solid angle of original cone ~=", 
+          util.scaledSolidAngle(Y))
+    print("SSA of cone in PCA feature space ~=", 
+          util.scaledSolidAngle(Y_hat))
+
+# sample from 2d unit sphere first quadrant
+if 0:
+    points = util.uniformFromUnitSphere(2, 200)
+    
+    # reflect to positive orthant
+    points = np.abs(points)
+    
+    # 2d case
+    plt.scatter(
+        points[:, 0],
+        points[:, 1],
+        )
+
+# sample from 3d unit sphere positive orthant
+if 0:
+    points = util.uniformFromUnitSphere(3, 200)
+    
+    # reflect to positive orthant
+    points = np.abs(points)
+    
+    # 3d case
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(
+        points[:, 0],
+        points[:, 1],
+        points[:, 2]
+        )
+    
+# Plot description of means and variances in real scRNA-seq data
+if 1:
+    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
+    
+    print("Reading single-cell data matrix Y...")
+    Y = preprocessing.csvToMatrix(scfile)
+    
+    #n = 400
+    #indices = set([ np.random.randint(Y.shape[0]) for _ in range(n) ])
+    indices = np.arange(Y.shape[0])
+    
+    print("Computing expectation and variance for", len(indices), "genes...")
+    E = np.array([ np.mean(Y[l]) for l in indices ]).astype(float)
+    V = np.array([ np.var(Y[l]) for l in indices ]).astype(float)
+    
+    E = np.log(E + 1)
+    V = np.log(V + 1)
+    
+    print("Plotting data...")
+    
+    fig, ax = plt.subplots()
+    ax.set_xlim(left=0, right=max(E))
+    ax.set_ylim(bottom=0, top=max(V))
+    ax.scatter(E, V)
+    ax.set_xlabel("log expectation")
+    ax.set_ylabel("log variance")
+    fig.tight_layout()
+    plt.show()
+
+# assess solid angle of original and PCA cones for simulated single-cell 
+# data
+if 0:
+    print("Generating joint datasets X1, Y1, and X2, Y2...")
+    X, Y = sims.simulateURSMdata()
+    
+    print("Performing PCA on single-cell data...")
+    D = 0.7
     pca = PCA(n_components=D)
     Y_hat = pca.fit_transform(Y.T).T
     
@@ -395,3 +417,61 @@ if 0:
     print("Removed rows of data not from fetal cells:")
     data = data[-226:]
     print(data)
+
+# assess convexity of background-finding problem
+if 0:
+    L = 7  # number of samples
+    V = np.random.rand(L)
+    V /= sum(V)
+    x_plot = np.linspace(0, 1, 101)
+    
+    # surface corresponding to residuals from a component
+    def f(s):
+        b = np.full(L, s)
+        return np.linalg.norm(V - b, ord=2)
+    
+    # 2d case
+    plt.plot(
+        x_plot,
+        [ f(s) for s in x_plot ]
+        )
+    
+# find background in simulated data... should be small
+if 0:
+    X, Y = sims.simulateURSMdata()
+    bx, normx = util.inferBackground(X)
+    by, normy = util.inferBackground(Y)
+
+# assess similarity of profiles in islets and 3cl
+if 0:
+    three_cell = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3clwithisletssc.csv"
+    islets = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_isletswith3clsc.csv"
+    
+    print("Loading datasets...")
+    C = preprocessing.csvToMatrix(three_cell)
+    I = preprocessing.csvToMatrix(islets) 
+    Lc = C.shape[1]
+    Li = C.shape[1]
+    
+    print("Normalizing columns...")
+    C = normalize(C, norm='l1', axis=0)
+    I = normalize(I, norm='l1', axis=0)
+    
+    print("Computing distances to mean...")
+    c_mean = np.mean(C, axis=1)
+    i_mean = np.mean(I, axis=1)
+    
+    print("Expectation of distance from mean in 3cl data =")
+    c_devs = [ np.linalg.norm(C[:, l] - c_mean) for l in range(Lc) ]
+    print(np.mean(c_devs))
+    
+    print("Expectation of distance from mean in islets data =")
+    i_devs = [ np.linalg.norm(I[:, l] - i_mean) for l in range(Li) ]
+    print(np.mean(i_devs))
+    
+    print("Distance between 3cl and islets means =", 
+          np.linalg.norm(c_mean - i_mean))
+    
+    
+    
+    

@@ -10,7 +10,7 @@ Tests to decide whether bulk and scRNA-seq datasets are joint.
 
 import numpy as np
 import preprocessing
-from scipy.optimize import  nnls
+from scipy.optimize import nnls
 
 
 def residualsToCone(X, Y):
@@ -67,6 +67,11 @@ def pvalue(X, Y):
 def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     """
     Read bulk and scRNA-seq data from csv files and calculate p-value.
+    
+    REQUIRES: rows correspond to samples, columns to genes. The first 
+    row and column contain gene/sample names or numbers. Bulk and single-cell 
+    files are preprocessed to contain the same genes in the same order.
+    The data are raw counts, not log-transformed.
 
     Parameters
     ----------
@@ -82,7 +87,7 @@ def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     Chebyshev bound for probability that conic residuals are below their 
     observed values under null hypothesis.
     """
-    # conditional print
+    # conditional print function
     def printIf(*args):
         if not quiet:
             print(*args)

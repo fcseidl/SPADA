@@ -9,7 +9,8 @@ Various auxiliary methods for SPADA research.
 """
 
 import numpy as np
-from scipy.optimize import linprog
+from scipy.optimize import linprog, minimize
+from sklearn.preprocessing import normalize
 
 
 def uniformFromUnitSphere(n, k=None):
@@ -41,7 +42,7 @@ def scaledSolidAngle(Y):
     by the solid angle of the positive orthant in R^N, where Y has shape (N, L)
     """
     N, L = Y.shape
-    n_points = int(1e3)  # TODO: magic number
+    n_points = int(1e4)  # TODO: magic number
     count = 0
     for _ in range(n_points):
         x = uniformFromUnitSphere(N)
@@ -49,4 +50,36 @@ def scaledSolidAngle(Y):
         lp = linprog(c, A_eq=Y, b_eq=x)
         if lp.success: count += 1
     return count / n_points
+
+
+def inferBackground(X):
+    """
+    Guess a background profile which underlies each sample in normalized data 
+    matrix.
+
+    Parameters
+    ----------
+    X : array (n_samples, n_features)
+        Data matrix.
+
+    Returns
+    -------
+    b : array (n_features,)
+        Background vector b which averages the L1 normalized columns of X.
+    norm : float
+        Frobenius norm of normalized X minus [b, ..., b].
+    """
+    # preprocess X
+    M = X.shape[1]
+    X = normalize(X, norm='l1', axis=0)
+    b = np.mean(X, axis=1)
+    norm = np.sqrt(
+                sum(
+                    [ np.linalg.norm(X[:, m] - b) ** 2
+                     for m in range(M) ]
+                    )
+                )
+    return b, norm
+    
+    
     

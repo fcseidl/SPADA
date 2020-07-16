@@ -166,5 +166,9 @@ def simulateURSMdata():
     Y = true_single_cell(N, L, K, alpha, A=A)
     doubleExpDropouts(Y, lam)
     return X, Y
-    
+
+
+def g_star(x, c):
+    """non-linear monotone tranformation from MMC paper"""
+    return 1 / (1 + np.e ** (-c * x))
     
