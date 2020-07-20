@@ -28,34 +28,36 @@ if 1:
     n_genes = 273
     n_types = 3
     n_clusters = 2 * n_types    # TODO: don't use hidden info
-    lam = 10.0                  # TODO: use non-neglible dropouts
-    L = 130                     # compare to smaller datasets
+    lam = 0.1
+    Lbig = 213
+    Lsmall = 130
     
     print("Generating joint scRNA-seq datasets Y1 and Y2, and unrelated dataset Y3...")
     alpha1 = sims.randomalpha(n_types)
     A1 = sims.randomA(n_genes, n_types)
     A2 = sims.randomA(n_genes, n_types)
     
-    _, Y1 = sims.simulateJointData(A=A1, alpha=alpha1, lam=lam)
-    _, Y2 = sims.simulateJointData(L=L, A=A1, alpha=alpha1, lam=lam)
-    _, Y3 = sims.simulateJointData(L=L, A=A2, lam=lam)
+    _, Y1 = sims.simulateJointData(L=Lbig, A=A1, alpha=alpha1, lam=lam)
+    _, Y2 = sims.simulateJointData(L=Lsmall, A=A1, alpha=alpha1, lam=lam)
+    _, Y3 = sims.simulateJointData(L=Lsmall, A=A2, lam=lam)
     
-    '''
     print("Performing ZIFA on data Y1, Y2, Y3...")
-    n_components = 10
-    Y1 = preprocessing.ZIFApreprocessing(Y1)
-    Y2 = preprocessing.ZIFApreprocessing(Y2)
-    Y3 = preprocessing.ZIFApreprocessing(Y3)
-    Y1, _ = ZIFA.fitModel(Y1, n_components)
-    Y2, _ = ZIFA.fitModel(Y2, n_components)
-    Y3, _ = ZIFA.fitModel(Y3, n_components)
-    '''
+    Y = np.concatenate((Y1, Y2, Y3), axis=1)
+    Y = preprocessing.ZIFApreprocessing(Y)
+    Y, _ = ZIFA.fitModel(Y.T, n_clusters)
+    Y = Y.T
+    Y1 = Y[:, :Lbig]
+    Y2 = Y[:, Lbig:-Lsmall]
+    Y3 = Y[:, -Lsmall:]
     
+    '''
     print("Performing PCA on data Y1, Y2, Y3...")
     pca = PCA(n_components=0.9)
     Y1 = pca.fit_transform(Y1.T).T
+    print("90% of variance explained by", pca.n_components_, "principal components")
     Y2 = pca.transform(Y2.T).T
     Y3 = pca.transform(Y3.T).T
+    '''
     
     print("Cluster heterogeneity on Y1 and Y2:")
     ht.clusterHeterogeneity(Y1, Y2, n_clusters=n_clusters)
@@ -271,8 +273,8 @@ if 0:
     print("single-cell data after dropouts:\n", Y)
     
     Y = preprocessing.ZIFApreprocessing(Y)
-    Z, params = ZIFA.fitModel(Y, K)
-    print("ZIFA estimated latent positions:\n", Z)
+    Z, params = ZIFA.fitModel(Y.T, K)
+    print("ZIFA estimated latent positions:\n", Z.T)
     
 # Plot description of variances of gene expressions in real scRNA-seq data
 if 0:
