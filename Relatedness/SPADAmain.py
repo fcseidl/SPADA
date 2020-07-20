@@ -18,7 +18,7 @@ from ZIFA import ZIFA
 
 import preprocessing
 import simulations as sims
-import HypothesisTesting as ht
+import RelatednessTesting as rt
 import SPADAutil as util
 
 
@@ -56,7 +56,7 @@ if 1:
     
     # TODO: avoid using n_types, hidden info
     print("\nCluster heterogeneity on Y1 and Y2 (expect high heterogeneity):")
-    ht.clusterHeterogeneity(Y1, Y2)#, n_clusters=n_types)
+    rt.clusterHeterogeneity(Y1, Y2)#, n_clusters=n_types)
     
     print("\nPerforming ZIFA on data Y1 and Y3...")
     Y13, _ = ZIFA.fitModel(Y13.T, n_components)
@@ -65,7 +65,7 @@ if 1:
     Y3 = Y13[:, -Lsmall:]
     
     print("\nCH on Y1 and Y3 (expect low heterogeneity):")
-    ht.clusterHeterogeneity(Y1, Y3)#, n_clusters=2*n_types)
+    rt.clusterHeterogeneity(Y1, Y3)#, n_clusters=2*n_types)
 
 # how much variance is explained by principal components?
 if 0:
@@ -94,28 +94,28 @@ if 0:
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
-    ht.identifyJointDatasets(bulkfile, scfile)
+    rt.identifyJointDatasets(bulkfile, scfile)
     print()
     
     print("Bulk: 3cl mixture")
     print("Single-cell: 3cl mixture")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
-    ht.identifyJointDatasets(bulkfile, scfile)
+    rt.identifyJointDatasets(bulkfile, scfile)
     print()
     
     print("Bulk: 3cl mixture")
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_islets_sc.csv"
-    ht.identifyJointDatasets(bulkfile, scfile)
+    rt.identifyJointDatasets(bulkfile, scfile)
     print()
     
     print("Bulk: pancreatic islets")
     print("Single-cell: 3cl mixture")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_bulk.csv"
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_3cl_sc.csv"
-    ht.identifyJointDatasets(bulkfile, scfile)
+    rt.identifyJointDatasets(bulkfile, scfile)
     print()
 
 # hypothesis testing with simulated data
@@ -140,14 +140,14 @@ if 0:
     '''
     
     print('Are X1 and Y1 joint? Expect 0, receive', 
-          ht.residualsToCone(X1, Y1))
+          rt.residualsToCone(X1, Y1))
     print('Are X2 and Y1 joint? Expect > 0, receive', 
-          ht.residualsToCone(X2, Y1))
+          rt.residualsToCone(X2, Y1))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          ht.pvalue(X1, Y1))
+          rt.pvalue(X1, Y1))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          ht.pvalue(X2, Y1))
+          rt.pvalue(X2, Y1))
 
 # hypothesis testing on dimensionality-reduced simulated data with PCA
 if 0:
@@ -165,14 +165,14 @@ if 0:
     X2_hat = pca.transform(X2.T).T
     
     print('Are X1 and Y1 joint? Expect 0, receive', 
-          ht.residualsToCone(X1_hat, Y1_hat))
+          rt.residualsToCone(X1_hat, Y1_hat))
     print('Are X2 and Y1 joint? Expect > 0, receive', 
-          ht.residualsToCone(X2_hat, Y1_hat))
+          rt.residualsToCone(X2_hat, Y1_hat))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          ht.pvalue(X1_hat, Y1_hat))
+          rt.pvalue(X1_hat, Y1_hat))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          ht.pvalue(X2_hat, Y1_hat))
+          rt.pvalue(X2_hat, Y1_hat))
     
 # hypothesis testing on dimensionality-reduced simulated data with FA
 if 0:
@@ -190,14 +190,14 @@ if 0:
     X2_hat = fa.transform(X2.T).T
     
     print('Are X1 and Y1 joint? Expect 0, receive', 
-          ht.residualsToCone(X1_hat, Y1_hat))
+          rt.residualsToCone(X1_hat, Y1_hat))
     print('Are X2 and Y1 joint? Expect > 0, receive', 
-          ht.residualsToCone(X2_hat, Y1_hat))
+          rt.residualsToCone(X2_hat, Y1_hat))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          ht.pvalue(X1_hat, Y1_hat))
+          rt.pvalue(X1_hat, Y1_hat))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          ht.pvalue(X2_hat, Y1_hat))
+          rt.pvalue(X2_hat, Y1_hat))
 
 # hypothesis testing with two halves of a real dataset
 if 0:
@@ -237,22 +237,22 @@ if 0:
     Y2 = Y[halfway:]
 
     print("Are X1 and Y1 joint? Expect 0, receive",
-          ht.residualsToCone(X1, Y1))
+          rt.residualsToCone(X1, Y1))
     print("Are X1 and Y2 joint? Expect > 0, receive",
-          ht.residualsToCone(X1, Y2))
+          rt.residualsToCone(X1, Y2))
     print("Are X2 and Y1 joint? Expect > 0, receive",
-          ht.residualsToCone(X2, Y1))
+          rt.residualsToCone(X2, Y1))
     print("Are X2 and Y2 joint? Expect 0, receive",
-          ht.residualsToCone(X2, Y2))
+          rt.residualsToCone(X2, Y2))
     
     print("Probability of X1 and Y1 under null hypothesis <=",
-          ht.pvalue(X1, Y1))
+          rt.pvalue(X1, Y1))
     print("Probability of X1 and Y2 under null hypothesis <=",
-          ht.pvalue(X1, Y2))
+          rt.pvalue(X1, Y2))
     print("Probability of X2 and Y1 under null hypothesis <=",
-          ht.pvalue(X2, Y1))
+          rt.pvalue(X2, Y1))
     print("Probability of X2 and Y2 under null hypothesis <=",
-          ht.pvalue(X2, Y2))
+          rt.pvalue(X2, Y2))
 
 # Plot description of variances of gene expressions in real scRNA-seq data
 if 0:

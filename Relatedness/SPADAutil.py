@@ -97,37 +97,5 @@ def scaledSolidAngle(Y):
         lp = linprog(c, A_eq=Y, b_eq=x)
         if lp.success: count += 1
     return count / n_points
-
-
-def inferBackground(X):
-    """
-    Guess a background profile which underlies each sample in normalized data 
-    matrix.
-
-    Parameters
-    ----------
-    X : array (n_samples, n_features)
-        Data matrix.
-
-    Returns
-    -------
-    b : array (n_features,)
-        Background vector b which averages the L1 normalized columns of X.
-    norm : float
-        Frobenius norm of normalized X minus [b, ..., b].
-        
-    """
-    # preprocess X
-    M = X.shape[1]
-    X = normalize(X, norm='l1', axis=0)
-    b = np.mean(X, axis=1)
-    norm = np.sqrt(
-                sum(
-                    [ np.linalg.norm(X[:, m] - b) ** 2
-                     for m in range(M) ]
-                    )
-                )
-    return b, norm
-    
     
     
