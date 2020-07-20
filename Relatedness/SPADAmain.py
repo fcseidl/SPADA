@@ -11,7 +11,6 @@ This module contains various tests.
 import numpy as np
 from sklearn.decomposition import PCA, FactorAnalysis
 import matplotlib.pyplot as plt
-import csv
 from sklearn.preprocessing import normalize
 from scipy import stats
 
@@ -255,30 +254,6 @@ if 0:
     print("Probability of X2 and Y2 under null hypothesis <=",
           ht.pvalue(X2, Y2))
 
-# perform ZIFA on simulated data
-if 0:
-    np.set_printoptions(precision=3)
-    
-    N = 70
-    M = 20
-    L = 100
-    K = 4
-    lam = 0.1
-    alpha = [ 1 for _ in range(K) ]
-    #alpha = [9, 16, 0.3, 6]
-    
-    A = sims.randomA(N, K)
-    X = sims.bulk(N, M, K, alpha, A=A)
-    Y = sims.true_single_cell(N, L, K, alpha, A=A)
-    print("noiseless bulk data:\n", X)
-    print("noiseless single-cell data, no dropouts:\n", Y)
-    sims.doubleExpDropouts(Y, lam)
-    print("single-cell data after dropouts:\n", Y)
-    
-    Y = preprocessing.ZIFApreprocessing(Y)
-    Z, params = ZIFA.fitModel(Y.T, K)
-    print("ZIFA estimated latent positions:\n", Z.T)
-    
 # Plot description of variances of gene expressions in real scRNA-seq data
 if 0:
     import preprocessing
@@ -302,25 +277,6 @@ if 0:
     plt.plot(np.arange(len(V)), V)
     plt.xlabel("gene")
     plt.ylabel("variance")
-
-# assess solid angle of original and PCA cones for simulated single-cell 
-# data
-if 0:
-    import simulations as sims
-    from sklearn.decomposition import PCA
-    
-    print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X, Y = sims.simulateJointData()
-    
-    print("Performing PCA on single-cell data...")
-    D = 206
-    pca = PCA(n_components=D)
-    Y_hat = pca.fit_transform(Y.T).T
-    
-    print("Scaled solid angle of original cone ~=", 
-          util.scaledSolidAngle(Y))
-    print("SSA of cone in PCA feature space ~=", 
-          util.scaledSolidAngle(Y_hat))
 
 # sample from 2d unit sphere first quadrant
 if 0:
@@ -438,22 +394,6 @@ if 0:
     fig.tight_layout()
     plt.show()
 
-# assess solid angle of original and PCA cones for simulated single-cell 
-# data
-if 0:
-    print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X, Y = sims.simulateJointData()
-    
-    print("Performing PCA on single-cell data...")
-    D = 0.7
-    pca = PCA(n_components=D)
-    Y_hat = pca.fit_transform(Y.T).T
-    
-    print("Scaled solid angle of original cone ~=", 
-          util.scaledSolidAngle(Y))
-    print("SSA of cone in PCA feature space ~=", 
-          util.scaledSolidAngle(Y_hat))
-
 # sample from 2d unit sphere first quadrant
 if 0:
     points = util.uniformFromUnitSphere(2, 200)
@@ -482,12 +422,6 @@ if 0:
         points[:, 1],
         points[:, 2]
         )
-    
-# find background in simulated data... should be small
-if 0:
-    X, Y = sims.simulateJointData()
-    bx, normx = util.inferBackground(X)
-    by, normy = util.inferBackground(Y)
 
 # assess similarity of profiles in islets and 3cl
 if 0:
