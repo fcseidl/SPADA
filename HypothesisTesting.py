@@ -150,8 +150,6 @@ def clusterHeterogeneity(A, B, n_clusters=-1):
     Unrelatedness score of A and B.
     
     """
-    # TODO: tuple of kmeans parameters as optional parameter
-    
     F, M = A.shape
     N = B.shape[1]
     assert(B.shape[0] == F)     # both datasets have same number of features

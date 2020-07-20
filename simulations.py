@@ -163,6 +163,9 @@ def doubleExpDropouts(Y, lam):
             if Y[n, l] > 0:
                 if np.random.rand() < np.e ** (-lam * (np.log(Y[n, l]) ** 2)):
                     Y[n, l] = 0
+                    
+            
+# TODO: different dropout models?
 
 
 def simulateJointData(N=273, M=72, L=213, K=3, lam=0.1, alpha=None, A=None):

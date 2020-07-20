@@ -39,6 +39,19 @@ def bestSilhouetteKMeans(X, max_n_clusters=10):
     """
     # TODO: implement this not using a terrible algorithm
     
+    centers = labels = []
+    k_best = 1
+    score_best = -1
+    for k in range(2, max_n_clusters):
+        kmeans = KMeans(n_clusters=k).fit(X)
+        score = silhouette_score(X, kmeans.labels_)
+        if score > score_best:
+            k_best = k
+            score_best = score
+            centers = kmeans.cluster_centers_
+            labels = kmeans.labels_
+    
+    '''
     # determine centers, labels, and silhouette scores for each k.
     candidate_centers = []
     candidate_labels = []
@@ -56,8 +69,9 @@ def bestSilhouetteKMeans(X, max_n_clusters=10):
         if scores[k - 2] > score_best:
             k_best = k
             score_best = scores[k - 2]
+    '''
     
-    return k_best, candidate_centers[k_best - 2], candidate_labels[k_best - 2]
+    return k_best, centers, labels
 
 
 def dropoutRate(Yn):
