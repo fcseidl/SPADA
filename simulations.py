@@ -35,7 +35,7 @@ def categorical(p):
 
 def randomA(N, K):
     """
-    Generate uniform random N x K signature matrix.
+    Generate random N x K signature matrix.
 
     Parameters
     ----------
@@ -52,6 +52,23 @@ def randomA(N, K):
     A += eps
     A = normalize(A, norm='l1', axis=0)
     return A
+
+
+def randomalpha(K):
+    """
+    Generate random paramter for Dirichlet distribution.
+
+    Parameters
+    ----------
+    K : int
+        Number of cells types, length of alpha.
+
+    Returns
+    -------
+    alpha : array, shape (K,)
+
+    """
+    return np.random.rand(K) * 1e5
     
 
 def bulk(N, M, K, alpha, A=None):
@@ -183,7 +200,7 @@ def simulateJointData(N=273, M=72, L=213, K=3, lam=0.1, alpha=None, A=None):
     else:
         N, K = A.shape
     if alpha is None:
-        alpha = np.random.rand(K) * 1e5
+        alpha = randomalpha(K)
     X = bulk(N, M, K, alpha, A=A)
     Y = true_single_cell(N, L, K, alpha, A=A)
     doubleExpDropouts(Y, lam)

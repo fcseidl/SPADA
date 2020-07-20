@@ -10,6 +10,7 @@ Tests to decide whether bulk and scRNA-seq datasets are joint.
 
 import numpy as np
 import preprocessing
+import SPADAutil as util
 from scipy.optimize import nnls
 from sklearn.cluster import KMeans
 
@@ -129,7 +130,7 @@ def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     return p
 
 
-def clusterHeterogeneity(A, B):
+def clusterHeterogeneity(A, B, n_clusters=-1):
     """
     Assess relatedness of two data matrices using cluster heterogeneity 
     technique.
@@ -140,24 +141,30 @@ def clusterHeterogeneity(A, B):
         First data matrix, with F features and N samples.
     B : array, shape (F, N)
         Second data matrix, with F feature and M samples.
+    n_clusters : int, optional
+        Number of clusters to use. By default, this is chosen dynamically 
+        using the average silhouette method.
 
     Returns
     -------
     Unrelatedness score of A and B.
     
     """
-    # TODO: option to dynamically choose number of clusters
     # TODO: tuple of kmeans parameters as optional parameter
     
     F, M = A.shape
     N = B.shape[1]
     assert(B.shape[0] == F)     # both datasets have same number of features
+    AB = np.concatenate((A, B), axis=1)
     
     # perform clustering
-    K = 2
-    AB = np.concatenate((A, B), axis=1)
-    kmeans = KMeans(n_clusters=K)
-    labels = kmeans.fit_predict(AB.T)
+    if n_clusters < 2:
+        K, centers, labels = util.bestSilhouetteKMeans(AB.T, max_n_clusters=20)
+        print(K, "clusters chosen to maximize average silhouette score")
+    else:
+        K = n_clusters
+        kmeans = KMeans(n_clusters=K)
+        labels = kmeans.fit_predict(AB.T)
     
     # Identify cluster of each datapoint. 
     # CA[k] is the number of points from cluster k in A.
@@ -180,7 +187,8 @@ def clusterHeterogeneity(A, B):
     H = [ CA[k] * CB[k] / C[k]**2 for k in range(K) ]
     
     # unified cluster heterogeneity score
-    h_star = 1 / (K * (M + N)) * sum([ C[k] * H[k] for k in range(K) ])
+    #h_star = 1 / (M + N) * sum([ C[k] * H[k] for k in range(K) ])
+    h_star = 1 / K * sum(H)
     
     print("Unified cluster heterogeneity score =", h_star)
     print("Overall heterogeneity =", h)

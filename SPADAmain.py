@@ -15,6 +15,8 @@ import csv
 from sklearn.preprocessing import normalize
 from scipy import stats
 
+from ZIFA import ZIFA
+
 import preprocessing
 import simulations as sims
 import HypothesisTesting as ht
@@ -23,21 +25,43 @@ import SPADAutil as util
 
 # CH relatedness testing on simulated URSM datasets, one cell type only
 if 1:
-    n_genes = 100
-    n_types = 10
+    n_genes = 273
+    n_types = 3
+    n_clusters = 2 * n_types    # TODO: don't use hidden info
+    lam = 10.0                  # TODO: use non-neglible dropouts
+    L = 130                     # compare to smaller datasets
+    
     print("Generating joint scRNA-seq datasets Y1 and Y2, and unrelated dataset Y3...")
+    alpha1 = sims.randomalpha(n_types)
     A1 = sims.randomA(n_genes, n_types)
     A2 = sims.randomA(n_genes, n_types)
     
-    _, Y1 = sims.simulateJointData(A=A1)
-    _, Y2 = sims.simulateJointData(A=A1)
-    _, Y3 = sims.simulateJointData(L=77, A=A2)
+    _, Y1 = sims.simulateJointData(A=A1, alpha=alpha1, lam=lam)
+    _, Y2 = sims.simulateJointData(L=L, A=A1, alpha=alpha1, lam=lam)
+    _, Y3 = sims.simulateJointData(L=L, A=A2, lam=lam)
+    
+    '''
+    print("Performing ZIFA on data Y1, Y2, Y3...")
+    n_components = 10
+    Y1 = preprocessing.ZIFApreprocessing(Y1)
+    Y2 = preprocessing.ZIFApreprocessing(Y2)
+    Y3 = preprocessing.ZIFApreprocessing(Y3)
+    Y1, _ = ZIFA.fitModel(Y1, n_components)
+    Y2, _ = ZIFA.fitModel(Y2, n_components)
+    Y3, _ = ZIFA.fitModel(Y3, n_components)
+    '''
+    
+    print("Performing PCA on data Y1, Y2, Y3...")
+    pca = PCA(n_components=0.9)
+    Y1 = pca.fit_transform(Y1.T).T
+    Y2 = pca.transform(Y2.T).T
+    Y3 = pca.transform(Y3.T).T
     
     print("Cluster heterogeneity on Y1 and Y2:")
-    ht.clusterHeterogeneity(Y1, Y2)
+    ht.clusterHeterogeneity(Y1, Y2, n_clusters=n_clusters)
     
     print("CH on Y1 and Y3:")
-    ht.clusterHeterogeneity(Y1, Y3)
+    ht.clusterHeterogeneity(Y1, Y3, n_clusters=n_clusters)
 
 # how much variance is explained by principal components?
 if 0:
@@ -228,9 +252,6 @@ if 0:
 
 # perform ZIFA on simulated data
 if 0:
-    from ZIFA import ZIFA
-    from preprocessing import ZIFApreprocessing
-    from SPADAutil import marker_quality
     np.set_printoptions(precision=3)
     
     N = 70
@@ -249,19 +270,9 @@ if 0:
     sims.doubleExpDropouts(Y, lam)
     print("single-cell data after dropouts:\n", Y)
     
-    Y = ZIFApreprocessing(Y)
+    Y = preprocessing.ZIFApreprocessing(Y)
     Z, params = ZIFA.fitModel(Y, K)
     print("ZIFA estimated latent positions:\n", Z)
-    
-    '''
-    mq = marker_quality(A)
-    plt.scatter(
-        [ max(mqn) for mqn in mq ],
-        [ np.var(Xn) for Xn in X ]
-        )
-    plt.xlabel('marker quality')
-    plt.ylabel('variance across samples')
-    '''
     
 # Plot description of variances of gene expressions in real scRNA-seq data
 if 0:

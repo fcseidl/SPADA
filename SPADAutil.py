@@ -11,6 +11,53 @@ Various auxiliary methods for SPADA research.
 import numpy as np
 from scipy.optimize import linprog, minimize
 from sklearn.preprocessing import normalize
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+
+def bestSilhouetteKMeans(X, max_n_clusters=10):
+    """
+    Perform k-means clustering using average silhouette method to determine 
+    optimal number of clusters.
+
+    Parameters
+    ----------
+    X : array, (n_samples, n_features)
+        Data matrix.
+    max_n_clusters : int, optional
+        Maximum number of clusters to try.
+
+    Returns
+    -------
+    n_clusters : int
+        Number of clusters used.
+    cluster_centers : array, shape (n_clusters, n_features)
+        Coordinates of cluster centers.
+    labels : array, shape (n_samples,)
+        Labels of each point.
+    
+    """
+    # TODO: this doesn't work so well
+    
+    # determine centers, labels, and silhouette scores for each k.
+    candidate_centers = []
+    candidate_labels = []
+    scores = []
+    for k in range(2, max_n_clusters):
+        kmeans = KMeans(n_clusters=k).fit(X)
+        candidate_centers.append(kmeans.cluster_centers_)
+        candidate_labels.append(kmeans.labels_)
+        scores.append(silhouette_score(X, kmeans.labels_))
+    
+    # determine k with highest silhouette score.
+    k_best = 2
+    score_best = scores[0]
+    for k in range(3, max_n_clusters):
+        if scores[k - 2] > score_best:
+            k_best = k
+            score_best = scores[k - 2]
+    
+    return k_best, candidate_centers[k_best - 2], candidate_labels[k_best - 2]
 
 
 def dropoutRate(Yn):
