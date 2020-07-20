@@ -13,11 +13,31 @@ from sklearn.decomposition import PCA, FactorAnalysis
 import matplotlib.pyplot as plt
 import csv
 from sklearn.preprocessing import normalize
+from scipy import stats
 
 import preprocessing
 import simulations as sims
 import HypothesisTesting as ht
 import SPADAutil as util
+
+
+# CH relatedness testing on simulated URSM datasets, one cell type only
+if 1:
+    n_genes = 100
+    n_types = 10
+    print("Generating joint scRNA-seq datasets Y1 and Y2, and unrelated dataset Y3...")
+    A1 = sims.randomA(n_genes, n_types)
+    A2 = sims.randomA(n_genes, n_types)
+    
+    _, Y1 = sims.simulateJointData(A=A1)
+    _, Y2 = sims.simulateJointData(A=A1)
+    _, Y3 = sims.simulateJointData(L=77, A=A2)
+    
+    print("Cluster heterogeneity on Y1 and Y2:")
+    ht.clusterHeterogeneity(Y1, Y2)
+    
+    print("CH on Y1 and Y3:")
+    ht.clusterHeterogeneity(Y1, Y3)
 
 # how much variance is explained by principal components?
 if 0:
@@ -40,6 +60,8 @@ if 0:
 
 # hypothesis testing with 2 real datasets
 if 0:
+    np.random.seed(0)
+    
     print("Bulk: pancreatic islets")
     print("Single-cell: pancreatic islets")
     bulkfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_bulk.csv"
@@ -71,8 +93,8 @@ if 0:
 # hypothesis testing with simulated data
 if 0:
     print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X1, Y1 = sims.simulateURSMdata()
-    X2, Y2 = sims.simulateURSMdata()
+    X1, Y1 = sims.simulateJointData()
+    X2, Y2 = sims.simulateJointData()
     
     '''
     print("Log-tranforming...")
@@ -81,12 +103,13 @@ if 0:
     Y1 = np.log(Y1 + 1)
     '''
     
+    '''
     print("Monotonically tranforming...")
     c = 10
     X1 = sims.g_star(X1, c)
     X2 = sims.g_star(X2, c)
     Y1 = sims.g_star(Y1, c)
-    
+    '''
     
     print('Are X1 and Y1 joint? Expect 0, receive', 
           ht.residualsToCone(X1, Y1))
@@ -101,8 +124,8 @@ if 0:
 # hypothesis testing on dimensionality-reduced simulated data with PCA
 if 0:
     print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X1, Y1 = sims.simulateURSMdata()
-    X2, Y2 = sims.simulateURSMdata()
+    X1, Y1 = sims.simulateJointData()
+    X2, Y2 = sims.simulateJointData()
     
     print("Performing PCA on single-cell data...")
     D = 0.999999
@@ -126,8 +149,8 @@ if 0:
 # hypothesis testing on dimensionality-reduced simulated data with FA
 if 0:
     print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X1, Y1 = sims.simulateURSMdata()
-    X2, Y2 = sims.simulateURSMdata()
+    X1, Y1 = sims.simulateJointData()
+    X2, Y2 = sims.simulateJointData()
     
     print("Performing Factor Analysis on single-cell data...")
     D = 25
@@ -271,7 +294,7 @@ if 0:
     from sklearn.decomposition import PCA
     
     print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X, Y = sims.simulateURSMdata()
+    X, Y = sims.simulateJointData()
     
     print("Performing PCA on single-cell data...")
     D = 206
@@ -313,7 +336,7 @@ if 0:
         )
     
 # Plot description of means and variances in real scRNA-seq data
-if 1:
+if 0:
     scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
     
     print("Reading single-cell data matrix Y...")
@@ -341,11 +364,69 @@ if 1:
     fig.tight_layout()
     plt.show()
 
+# Plot description of mean and coefs of variation in real scRNA-seq data
+if 0:
+    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
+    
+    print("Reading single-cell data matrix Y...")
+    Y = preprocessing.csvToMatrix(scfile)
+    
+    #n = 400
+    #indices = set([ np.random.randint(Y.shape[0]) for _ in range(n) ])
+    indices = np.arange(Y.shape[0])
+    
+    print("Computing expectation and var coef for", len(indices), "genes...")
+    E = np.array([ np.mean(Y[l]) for l in indices ]).astype(float)
+    V = np.array([ stats.variation(Y[l]) for l in indices ]).astype(float)
+    
+    E = np.log(E + 1)
+    #V = np.log(V + 1)
+    
+    print("Plotting data...")
+    
+    fig, ax = plt.subplots()
+    ax.set_xlim(left=0, right=max(E))
+    ax.set_ylim(bottom=0, top=max(V))
+    ax.scatter(E, V)
+    ax.set_xlabel("log expectation")
+    ax.set_ylabel("coef of variation")
+    fig.tight_layout()
+    plt.show()
+    
+# Plot description of mean and dropout rate in real scRNA-seq data
+if 0:
+    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
+    
+    print("Reading single-cell data matrix Y...")
+    Y = preprocessing.csvToMatrix(scfile)
+    
+    #n = 400
+    #indices = set([ np.random.randint(Y.shape[0]) for _ in range(n) ])
+    indices = np.arange(Y.shape[0])
+    
+    print("Computing expectation and dropout rare for", 
+          len(indices), "genes...")
+    E = np.array([ np.mean(Y[n]) for n in indices ]).astype(float)
+    V = np.array([ util.dropoutRate(Y[n]) for n in indices ]).astype(float)
+    
+    E = np.log(E + 1)
+    
+    print("Plotting data...")
+    
+    fig, ax = plt.subplots()
+    ax.set_xlim(left=0, right=max(E))
+    ax.set_ylim(bottom=0, top=max(V))
+    ax.scatter(E, V)
+    ax.set_xlabel("log expectation")
+    ax.set_ylabel("dropout rate")
+    fig.tight_layout()
+    plt.show()
+
 # assess solid angle of original and PCA cones for simulated single-cell 
 # data
 if 0:
     print("Generating joint datasets X1, Y1, and X2, Y2...")
-    X, Y = sims.simulateURSMdata()
+    X, Y = sims.simulateJointData()
     
     print("Performing PCA on single-cell data...")
     D = 0.7
@@ -385,60 +466,10 @@ if 0:
         points[:, 1],
         points[:, 2]
         )
-
-# simple test for findBlockExpressingNGenes()
-if 0:
-    data = np.array([[0, 1, 0, 2, 0, 3],
-                     [0, 0, 1, 2, 0, 3],
-                     [0, 1, 0, 0, 0, 0],
-                     [0, 1, 0, 0, 0, 3]])
-    print(preprocessing.findBlockExpressingNGenes(data, 1, 3))
-
-# try to find 72 12-13 PCW fetal prefrontal cortical cells in Kang data
-if 0:
-    filename = (
-        "/Users/fcseidl/Downloads/GSE25219_DABG_pvalue.csv")
-    with open(filename) as readfile:
-        read_tsv = csv.reader(readfile, delimiter=",")
-        data = np.array([ row for row in read_tsv ])
-    data = data[1:, 1:]             # trim first row and col
-    data = data.astype(np.float)    # convert to floats
-    print(preprocessing.findBlockExpressingNGenes(data, 72, 16947))
-
-# begin preprocessing of Camp data by ignoring non-fetal cells 
-if 0:
-    filename = (
-        "/Users/fcseidl/Downloads/GSE75140_hOrg.fetal.master.data.frame.txt")
-    print("Reading data from file...")
-    with open(filename) as readfile:
-        read_tsv = csv.reader(readfile, delimiter="\t")
-        data = np.array([ row for row in read_tsv ])
-    print(data)
-    print("Removed rows of data not from fetal cells:")
-    data = data[-226:]
-    print(data)
-
-# assess convexity of background-finding problem
-if 0:
-    L = 7  # number of samples
-    V = np.random.rand(L)
-    V /= sum(V)
-    x_plot = np.linspace(0, 1, 101)
-    
-    # surface corresponding to residuals from a component
-    def f(s):
-        b = np.full(L, s)
-        return np.linalg.norm(V - b, ord=2)
-    
-    # 2d case
-    plt.plot(
-        x_plot,
-        [ f(s) for s in x_plot ]
-        )
     
 # find background in simulated data... should be small
 if 0:
-    X, Y = sims.simulateURSMdata()
+    X, Y = sims.simulateJointData()
     bx, normx = util.inferBackground(X)
     by, normy = util.inferBackground(Y)
 

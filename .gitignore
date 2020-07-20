@@ -8,4 +8,6 @@ ZIFA/
 
 *.exe
 
-datasets/
+RNAseq/
+
+texts/

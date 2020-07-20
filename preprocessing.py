@@ -11,6 +11,37 @@ Preprocessing bulk and scRNA-seq data.
 import numpy as np
 import csv
 
+# TODO: finish this?
+class Thresholder:
+    """
+    A Thresholder object over a matrix Y determines which rows Y[n] have 
+    coefficient of variation / variance exceeding a threshold.
+    """
+    
+    stats = {'var_coef': lambda Yn : np.sqrt(np.var(Yn)) / Yn.mean(),
+             'var' : np.var}
+    
+    def __init__(self, Y, attribute='var_coef'):
+        """
+        Construct a Thresholder over a 2d array Y which applies thresholds to 
+        a particular attribute of each row in Y. Default attribute is the 
+        coefficient of variation.
+        """
+        self.attribute = attribute
+        fun = self.stats[attribute]
+        self.values = [ fun(Yn) for Yn in Y ]
+        
+    ### choose the threshold which includes only data with 
+    ##def _choose_threshold(self):
+        
+    
+    def selectRows(self, threshold):
+        """
+        Return list of row indices which exceed threshold.
+        """
+        return [ n for n in range(len(self.values)) 
+                if self.values[n] >= threshold ]
+
 
 def ZIFApreprocessing(Y):
     """
@@ -25,6 +56,7 @@ def ZIFApreprocessing(Y):
     -------
     Y with zero columns removed. If Y contains raw counts, then Y is also 
     log-transformed.
+    
     """
     # remove zero cols
     L = L0 = Y.shape[1]
@@ -63,6 +95,7 @@ def csvToMatrix(filename, delim=','):
     Returns
     -------
     A 2d numpy array containing (unlabeled) data from file.
+    
     """
     with open(filename) as readfile:
         read_csv = csv.reader(readfile, delimiter=delim)
@@ -88,6 +121,7 @@ def removeRowsPred(X, Y, pred):
     Returns
     -------
     X, Y modified to exclude rows n where pred(Y[n]) is True.
+    
     """
     N = Y.shape[0]
     indices = []
@@ -113,6 +147,7 @@ def scaleRowsByVariance(X, Y):
     -------
     X, Y, where each row is scaled in proportion to the original variance of 
     that gene in Y.
+    
     """
     # L-inifinity normalized variances
     var = np.array([ np.var(Yn) for Yn in Y ])

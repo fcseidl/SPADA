@@ -11,6 +11,7 @@ Tests to decide whether bulk and scRNA-seq datasets are joint.
 import numpy as np
 import preprocessing
 from scipy.optimize import nnls
+from sklearn.cluster import KMeans
 
 
 def residualsToCone(X, Y):
@@ -28,6 +29,7 @@ def residualsToCone(X, Y):
     -------
     Average over j of min ||X[:, j] - b|| / ||X[:, j]|| for b in cone(Y). 
     l2 norm is used.
+    
     """
     M = X.shape[1]
     normalized_residuals = []
@@ -52,6 +54,7 @@ def pvalue(X, Y):
     Returns
     -------
     Chebyshev bound for probability under null hypothesis.
+    
     """
     true_residuals = residualsToCone(X, Y)   # true order
     permuted_residuals = []
@@ -86,6 +89,7 @@ def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     -------
     Chebyshev bound for probability that conic residuals are below their 
     observed values under null hypothesis.
+    
     """
     # conditional print function
     def printIf(*args):
@@ -124,4 +128,66 @@ def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     
     return p
 
+
+def clusterHeterogeneity(A, B):
+    """
+    Assess relatedness of two data matrices using cluster heterogeneity 
+    technique.
+
+    Parameters
+    ----------
+    A : array, shape (F, M)
+        First data matrix, with F features and N samples.
+    B : array, shape (F, N)
+        Second data matrix, with F feature and M samples.
+
+    Returns
+    -------
+    Unrelatedness score of A and B.
+    
+    """
+    # TODO: option to dynamically choose number of clusters
+    # TODO: tuple of kmeans parameters as optional parameter
+    
+    F, M = A.shape
+    N = B.shape[1]
+    assert(B.shape[0] == F)     # both datasets have same number of features
+    
+    # perform clustering
+    K = 2
+    AB = np.concatenate((A, B), axis=1)
+    kmeans = KMeans(n_clusters=K)
+    labels = kmeans.fit_predict(AB.T)
+    
+    # Identify cluster of each datapoint. 
+    # CA[k] is the number of points from cluster k in A.
+    # CB[k] is the number of points from cluster k in B. 
+    # C[k] is the size of cluster k.
+    CA = np.zeros(K, dtype=int)
+    CB = np.zeros(K, dtype=int)
+    C = np.zeros(K, dtype=int)
+    for k in labels[:M]:        # labels of samples of A
+        CA[k] += 1
+        C[k] += 1
+    for k in labels[-N:]:       # labels of samples of B
+        CB[k] += 1
+        C[k] += 1
+    
+    # overall heterogeneity
+    h = M * N / (M + N)**2
+    
+    # cluster heterogeneities
+    H = [ CA[k] * CB[k] / C[k]**2 for k in range(K) ]
+    
+    # unified cluster heterogeneity score
+    h_star = 1 / (K * (M + N)) * sum([ C[k] * H[k] for k in range(K) ])
+    
+    print("Unified cluster heterogeneity score =", h_star)
+    print("Overall heterogeneity =", h)
+    
+    return h_star / h
+    
+    
+    
+    
     

@@ -27,6 +27,7 @@ def categorical(p):
     Returns
     -------
     A single sample from the categorical distribution.
+    
     """
     counts = np.random.multinomial(1, p)
     return list(counts).index(1)
@@ -45,6 +46,7 @@ def randomA(N, K):
     -------
     A : array
         signature matrix
+        
     """
     A = np.random.rand(N, K)
     A += eps
@@ -71,6 +73,7 @@ def bulk(N, M, K, alpha, A=None):
     -------
     X : array
         N x M data matrix giving expression level of each gene in each sample.
+        
     """
     if A is None:
         A = randomA(N, K)
@@ -103,6 +106,7 @@ def true_single_cell(N, L, K, alpha, A=None):
     -------
     Y : array
         N x L data matrix giving expression level of each gene in each cell.
+        
     """
     if A is None:
         A = randomA(N, K)
@@ -133,6 +137,7 @@ def doubleExpDropouts(Y, lam):
     -------
     Randomly zero elements of Y with probability 
     double exponential in the log of true expression.
+    
     """
     N = Y.shape[0]
     L = Y.shape[1]
@@ -143,25 +148,42 @@ def doubleExpDropouts(Y, lam):
                     Y[n, l] = 0
 
 
-def simulateURSMdata():
+def simulateJointData(N=273, M=72, L=213, K=3, lam=0.1, alpha=None, A=None):
     """
-    Create a simulated joint dataset with same dimensions as URSM fetal brain 
-    data.
-    
+    Create a simulated joint dataset. Default settings resemble the real 
+    dataset used in the URSM paper.
+
+    Parameters
+    ----------
+    N : int, optional
+        Number of genes. The default is 273.
+    M : int, optional
+        Number of bulk samples. The default is 72.
+    L : int, optional
+        Number of single cells. The default is 213.
+    K : int, optional
+        Number of cell types. The default is 3.
+    lam : float, optional
+        Paramter to double exponential dropout model. The default is 0.1.
+    alpha : array, shape (K,) optional
+        Parameter for Dirichlet distribution. Randomly generated if not given.
+    A : array, shape (N, K), optional
+        Signature matrix. Randomly generated if not given.
+
     Returns
     -------
-    X : array, shape (273, 72)
+    X : array, shape (N, M)
         bulk data
-    Y : array shape (273, 213)
+    Y : array shape (N, L)
         single-cell data
+        
     """
-    N = 273
-    M = 72
-    L = 213
-    K = 3
-    lam = 0.1
-    alpha = [ 2e4, 1e4, 7e4 ]
-    A = randomA(N, K)
+    if A is None:
+        A = randomA(N, K)
+    else:
+        N, K = A.shape
+    if alpha is None:
+        alpha = np.random.rand(K) * 1e5
     X = bulk(N, M, K, alpha, A=A)
     Y = true_single_cell(N, L, K, alpha, A=A)
     doubleExpDropouts(Y, lam)

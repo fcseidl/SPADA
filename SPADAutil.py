@@ -13,6 +13,13 @@ from scipy.optimize import linprog, minimize
 from sklearn.preprocessing import normalize
 
 
+def dropoutRate(Yn):
+    """
+    Compute fraction of dropouts for a gene.
+    """
+    return 1 - (np.count_nonzero(Yn) / Yn.shape[0])
+
+
 def uniformFromUnitSphere(n, k=None):
     """
     Sample a uniform distribution over the n-dimensional unit sphere.
@@ -28,6 +35,7 @@ def uniformFromUnitSphere(n, k=None):
     -------
     k samples from a uniform distribution over the n-dimensional unit 
     sphere, with shape (n, k)
+    
     """
     if k is None:
         x = np.random.randn(n)
@@ -40,6 +48,7 @@ def scaledSolidAngle(Y):
     """
     Approximate solid angle of cone(Y) for a matrix Y >= 0. Result is divided 
     by the solid angle of the positive orthant in R^N, where Y has shape (N, L)
+    
     """
     N, L = Y.shape
     n_points = int(1e4)  # TODO: magic number
@@ -68,6 +77,7 @@ def inferBackground(X):
         Background vector b which averages the L1 normalized columns of X.
     norm : float
         Frobenius norm of normalized X minus [b, ..., b].
+        
     """
     # preprocess X
     M = X.shape[1]
