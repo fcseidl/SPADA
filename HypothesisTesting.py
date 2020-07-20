@@ -188,7 +188,7 @@ def clusterHeterogeneity(A, B, n_clusters=-1):
     
     # unified cluster heterogeneity score
     #h_star = 1 / (M + N) * sum([ C[k] * H[k] for k in range(K) ])
-    h_star = 1 / K * sum(H)
+    h_star = sum(H) / K
     
     print("Unified cluster heterogeneity score =", h_star)
     print("Overall heterogeneity =", h)

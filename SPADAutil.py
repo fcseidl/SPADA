@@ -37,7 +37,7 @@ def bestSilhouetteKMeans(X, max_n_clusters=10):
         Labels of each point.
     
     """
-    # TODO: this doesn't work so well
+    # TODO: implement this not using a terrible algorithm
     
     # determine centers, labels, and silhouette scores for each k.
     candidate_centers = []

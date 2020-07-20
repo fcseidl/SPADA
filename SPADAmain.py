@@ -23,14 +23,14 @@ import HypothesisTesting as ht
 import SPADAutil as util
 
 
-# CH relatedness testing on simulated URSM datasets, one cell type only
+# CH relatedness testing on simulated scRNA-seq datasets
 if 1:
     n_genes = 273
     n_types = 3
-    n_clusters = 2 * n_types    # TODO: don't use hidden info
     lam = 0.1
     Lbig = 213
-    Lsmall = 130
+    Lsmall = 90
+    n_components = 10   # TODO: choose this dynamically?
     
     print("Generating joint scRNA-seq datasets Y1 and Y2, and unrelated dataset Y3...")
     alpha1 = sims.randomalpha(n_types)
@@ -39,31 +39,34 @@ if 1:
     
     _, Y1 = sims.simulateJointData(L=Lbig, A=A1, alpha=alpha1, lam=lam)
     _, Y2 = sims.simulateJointData(L=Lsmall, A=A1, alpha=alpha1, lam=lam)
-    _, Y3 = sims.simulateJointData(L=Lsmall, A=A2, lam=lam)
+    _, Y3 = sims.simulateJointData(L=Lsmall, A=A2, lam=lam) # unrelated
     
-    print("Performing ZIFA on data Y1, Y2, Y3...")
-    Y = np.concatenate((Y1, Y2, Y3), axis=1)
-    Y = preprocessing.ZIFApreprocessing(Y)
-    Y, _ = ZIFA.fitModel(Y.T, n_clusters)
-    Y = Y.T
-    Y1 = Y[:, :Lbig]
-    Y2 = Y[:, Lbig:-Lsmall]
-    Y3 = Y[:, -Lsmall:]
+    print("\nPreprocessing Y1 and Y2 for ZIFA...")
+    Y12 = np.concatenate((Y1, Y2), axis=1)  # joined data matrices
+    Y12 = preprocessing.ZIFApreprocessing(Y12)
     
-    '''
-    print("Performing PCA on data Y1, Y2, Y3...")
-    pca = PCA(n_components=0.9)
-    Y1 = pca.fit_transform(Y1.T).T
-    print("90% of variance explained by", pca.n_components_, "principal components")
-    Y2 = pca.transform(Y2.T).T
-    Y3 = pca.transform(Y3.T).T
-    '''
+    print("\nPreprocessing Y1 and Y3 for ZIFA...")
+    Y13 = np.concatenate((Y1, Y3), axis=1)
+    Y13 = preprocessing.ZIFApreprocessing(Y13)
     
-    print("Cluster heterogeneity on Y1 and Y2:")
-    ht.clusterHeterogeneity(Y1, Y2, n_clusters=n_clusters)
+    print("\nPerforming ZIFA on data Y1 and Y2...")
+    Y12, _ = ZIFA.fitModel(Y12.T, n_components)
+    Y12 = Y12.T             # dim-reduced joined data matrix
+    Y1 = Y12[:, :Lbig]      # columns corresponding to Y1
+    Y2 = Y12[:, -Lsmall:]   # columns corresponding to Y2
     
-    print("CH on Y1 and Y3:")
-    ht.clusterHeterogeneity(Y1, Y3, n_clusters=n_clusters)
+    # TODO: avoid using n_types, hidden info
+    print("\nCluster heterogeneity on Y1 and Y2 (expect high heterogeneity):")
+    ht.clusterHeterogeneity(Y1, Y2)#, n_clusters=n_types)
+    
+    print("\nPerforming ZIFA on data Y1 and Y3...")
+    Y13, _ = ZIFA.fitModel(Y13.T, n_components)
+    Y13 = Y13.T
+    Y1 = Y13[:, :Lbig]
+    Y3 = Y13[:, -Lsmall:]
+    
+    print("\nCH on Y1 and Y3 (expect low heterogeneity):")
+    ht.clusterHeterogeneity(Y1, Y3)#, n_clusters=2*n_types)
 
 # how much variance is explained by principal components?
 if 0:

@@ -54,21 +54,21 @@ def ZIFApreprocessing(Y):
 
     Returns
     -------
-    Y with zero columns removed. If Y contains raw counts, then Y is also 
-    log-transformed.
+    Y : array
+        Y with zero rows removed. If Y contains raw counts, then Y is also 
+        log-transformed.
     
     """
     # remove zero cols
-    L = L0 = Y.shape[1]
-    l = 0
-    while l < L:    # TODO: terrible slow way too do this
-        if Y[:, l].sum() < 1e-6:
-            Y = np.delete(Y, l, axis=1)
-            L -= 1
-        else:
-            l += 1
-    if L < L0:
-        print("Removed", L0 - L, "all-zero columns from data.")
+    N = Y.shape[0]
+    n = 0
+    remove = []
+    for n in range(N):
+        if Y[n].sum() < 1e-6:
+            remove.append(n)
+    Y = np.delete(Y, remove, axis=0)
+    if len(remove) > 0:
+        print("Removed", len(remove), "all-zero rows from data.")
         
     # log-transform Y if data is raw
     if (Y - np.array(Y, dtype='int32')).sum() < 1e-6:
