@@ -37,8 +37,6 @@ def bestSilhouetteKMeans(X, max_n_clusters=10):
         Labels of each point.
     
     """
-    # TODO: implement this not using a terrible algorithm
-    
     centers = labels = []
     k_best = 1
     score_best = -1
@@ -50,27 +48,6 @@ def bestSilhouetteKMeans(X, max_n_clusters=10):
             score_best = score
             centers = kmeans.cluster_centers_
             labels = kmeans.labels_
-    
-    '''
-    # determine centers, labels, and silhouette scores for each k.
-    candidate_centers = []
-    candidate_labels = []
-    scores = []
-    for k in range(2, max_n_clusters):
-        kmeans = KMeans(n_clusters=k).fit(X)
-        candidate_centers.append(kmeans.cluster_centers_)
-        candidate_labels.append(kmeans.labels_)
-        scores.append(silhouette_score(X, kmeans.labels_))
-    
-    # determine k with highest silhouette score.
-    k_best = 2
-    score_best = scores[0]
-    for k in range(3, max_n_clusters):
-        if scores[k - 2] > score_best:
-            k_best = k
-            score_best = scores[k - 2]
-    '''
-    
     return k_best, centers, labels
 
 

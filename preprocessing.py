@@ -11,6 +11,7 @@ Preprocessing bulk and scRNA-seq data.
 import numpy as np
 import csv
 
+'''
 # TODO: finish this?
 class Thresholder:
     """
@@ -41,6 +42,7 @@ class Thresholder:
         """
         return [ n for n in range(len(self.values)) 
                 if self.values[n] >= threshold ]
+'''
 
 
 def ZIFApreprocessing(Y):
