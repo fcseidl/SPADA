@@ -12,6 +12,7 @@
 #include <iostream>         // cin, cout
 #include <string>
 #include <deque>
+#include <vector>
 #include <string.h>         // strtok
 #include <algorithm>        // max
 #include <iomanip>          // decimal precision
@@ -27,7 +28,7 @@ const char DEFAULT_DELIM = ',';
 /*
  Return string containing first token of a line.
  */
-std::string first_token(std::string line, const char * delims);
+std::string first_token(const std::string &line, char delims);
 
 
 // Combines data from two different csv files.
@@ -79,31 +80,30 @@ void print_tsv(const rangeType<eltType> & range) {
 
 
 /*
-Read a 2d array from a file. Rows are separated by newlines;
-columns are separated by any delimiters which appear in the
-parameter delims. Print the corner values of the array, using
-the following format:
+ Read a 2d array from a file. Rows are separated by newlines;
+ columns are separated by a delimiting character. Print the corner
+ values of the array, using the following format:
 
-1 1 1 ... 3 1 3
-4 1 3 ... 0 2 1
-3 6 2 ... 0 2 0
-...
-6 3 0 ... 0 0 4
-3 3 4 ... 1 3 2
-1 1 3 ... 3 0 7
-
-The size of the corner squares printed is determined by the parameter
-num. If num is larger than half the number of rows or columns, then
-entire rows or columns are printed without ellipses. Optionally, the
-first rows can be ignored.
-
-Finally, print the dimensions of the array.
-
-Single-pass, O(num^2) space.
+ 1 1 1 ... 3 1 3
+ 4 1 3 ... 0 2 1
+ 3 6 2 ... 0 2 0
+ ...
+ 6 3 0 ... 0 0 4
+ 3 3 4 ... 1 3 2
+ 1 1 3 ... 3 0 7
+ 
+ The size of the corner squares printed is determined by the parameter
+ num. If num is larger than half the number of rows or columns, then
+ entire rows or columns are printed without ellipses. Optionally, the
+ first rows can be ignored.
+ 
+ Finally, print the dimensions of the array.
+ 
+ Single-pass, O(num^2) space.
 */
-void print_corners(unsigned int num,
+void print_corners(int num,
                    const std::string &filename,
-                   const char * delims,
-                   unsigned int ignore_rows = 0);
+                   char delim,
+                   int ignore_rows = 0);
 
 #endif /* Preprocessing_hpp */

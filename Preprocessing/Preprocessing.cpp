@@ -15,10 +15,9 @@ using namespace std;
 /*
  Return string containing first token of a line.
  */
-string first_token(string line, const char * delims) {
-    char * str = &(line[0]);
-    char * token = strtok(str, delims);
-    return string(token);
+string first_token(const string &line, char delim) {
+    size_t len = line.find(delim);
+    return line.substr(0, len);
 } // first_token()
 
 
@@ -35,13 +34,13 @@ csvJoiner::csvJoiner(string &small,
     
     // read rows of first file, hash them by name
     while (getline(read_small, row)) {
-        string row_name = first_token(row, &delim);
+        string row_name = first_token(row, delim);
         rows_hash[row_name] = row;
     } // while reading 1
     
     // read rows of second file, storing them in map if they match rows in first
     while (getline(read_large, row)) {
-        string row_name = first_token(row, &delim);
+        string row_name = first_token(row, delim);
         if (rows_hash.count(row_name)) {
             rows_bst[row_name] = row;
         } // if
@@ -60,8 +59,8 @@ void csvJoiner::join(std::string &out) const {
     // determine number of samples--each is preceded by a comma
     const string &small_row = rows_hash.begin()->second;
     const string &large_row = rows_bst.begin()->second;
-    size_t small_width = count(small_row.begin(), small_row.end(), delim);
-    size_t large_width = count(large_row.begin(), large_row.end(), delim);
+    size_t small_width = (size_t)count(small_row.begin(), small_row.end(), delim);
+    size_t large_width = (size_t)count(large_row.begin(), large_row.end(), delim);
     write_out << small_width << ',' << large_width << '\n';
     
     // write concatenated rows
@@ -121,10 +120,11 @@ Finally, print the dimensions of the array.
 
 Single-pass, O(num^2) space.
 */
-void print_corners(unsigned int num,
+// TODO: code quality could be improved here :/
+void print_corners(int num,
                    const string &filename,
                    char delim,
-                   unsigned int ignore_rows) {
+                   int ignore_rows) {
     string line;
     ifstream reader(filename);
     deque< deque<string> > left(1);
@@ -133,7 +133,7 @@ void print_corners(unsigned int num,
     size_t row, col, num_cols, begin_right;
     
     // ignore first rows
-    for (unsigned i = 0; i < ignore_rows; ++i) getline(reader, line);
+    for (int i = 0; i < ignore_rows; ++i) getline(reader, line);
     
     // read first line, determine column index at which right corners begin
     getline(reader, line);
@@ -141,7 +141,7 @@ void print_corners(unsigned int num,
     ptr = strtok(&(line[0]), &delim);
     while (ptr) {
         string token(ptr);
-        if (num_cols < num) {   // left gets first num entries
+        if (num_cols < (size_t)num) {   // left gets first num entries
             left[0].push_back(token);
         } else {                // rightmost num entries in right
             if (right[0].size() >= (size_t)num) right[0].pop_front();
@@ -156,9 +156,9 @@ void print_corners(unsigned int num,
     for (row = 1; getline(reader, line); ++row) {
         if (row == (size_t)num) {
             // if num rows read, then print top corners
-            for (size_t r = 0; r < num; ++r) {
+            for (size_t r = 0; r < (size_t)num; ++r) {
                 print_tsv(left[r]);
-                if (2 * num < num_cols) cout << "...\t";
+                if (2 * (size_t)num < num_cols) cout << "...\t";
                 print_tsv(right[r]);
                 cout << '\n';
             } // for r
@@ -178,7 +178,7 @@ void print_corners(unsigned int num,
         ptr = strtok(&(line[0]), &delim);
         while (ptr) {
             string token(ptr);
-            if (col < num) {   // left gets first num entries
+            if (col < (size_t)num) {   // left gets first num entries
                 left.back().push_back(token);
             } else if (col >= begin_right) {
                 right.back().push_back(token);
@@ -189,12 +189,12 @@ void print_corners(unsigned int num,
     } // for row
     
     // print bottom corners
-    if (row > 2 * num) {    // are we skipping middle rows?
+    if (row > 2 * (size_t)num) {    // are we skipping middle rows?
         cout << "...\n";
     }
     for (size_t r = 0; r < left.size(); ++r) {
         print_tsv(left[r]);
-        if (2 * num < num_cols) cout << "...\t";
+        if (2 * (size_t)num < num_cols) cout << "...\t";
         print_tsv(right[r]);
         cout << '\n';
     } // for r
@@ -203,43 +203,3 @@ void print_corners(unsigned int num,
     cout << "\nArray is " << row << " rows by " << num_cols << " columns.\n";
 } // print_corners()
 
-
-int main(int argc, char *argv[]) {
-    // speeds up I/O
-    ios_base::sync_with_stdio(false);
-    
-    // redirect input for Xcode debugging
-    xcode_redirect(argc, argv);
-
-    switch (argv[1][1]) {
-        case 'c': {  // corners
-            unsigned int ignore_rows = 0;
-            if (argc > 3) ignore_rows = atoi(argv[3]);
-            print_corners(4, argv[2], DEFAULT_DELIM, ignore_rows);
-            break;
-        }
-        case 's': {  // ssf
-            string small(argv[2]), large(argv[3]), small_out(argv[4]), large_out(argv[5]);
-            csvJoiner joiner(small, large, DEFAULT_DELIM);
-            joiner.sorted_shared_features(small_out, large_out);
-            break;
-        }
-        case 'j': { // join
-            string small(argv[2]), large(argv[3]), out(argv[4]);
-            csvJoiner joiner(small, large, DEFAULT_DELIM);
-            joiner.join(out);
-            break;
-        }
-        default:
-            cout << "Usage:\n"
-                << "./preprocess.exe -corners [filename]\n"
-                << "or\n"
-                << "./preprocess.exe -corners [filename] [ignore_rows]\n"
-                << "or\n"
-                << "./preprocess.exe -ssf [small] [large] [small_out] [large_out]\n"
-                << "or\n"
-                << "./preprocess.exe -join [small] [large] [out]\n";
-            return 1;
-    } // switch
-    return 0;
-} // main
