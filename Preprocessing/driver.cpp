@@ -9,29 +9,18 @@
 #include <cassert>
 
 #include "xcode_redirect.hpp"
-#include "Preprocessing.hpp"
-
-/*
- Usage:
- ./preprocess.exe -corners [filename]
- or
- ./preprocess.exe -corners [filename] -ignore [ignore_rows]
- or
- ./preprocess.exe -ssf [small] [large] [small_out] [large_out]
- or
- ./preprocess.exe -join [small] [large] [out]
- */
+#include "csvtools.hpp"
 
 using namespace std;
 
 const int CORNER_SQUARE_SIZE = 4;
 
 const string USAGE =
-"Allowable usages:\n   \
-./preprocess.exe -corners [filename]\n \
-./preprocess.exe -corners [filename] -ignore [ignore_rows]\n \
-./preprocess.exe -ssf [small] [large] [small_out] [large_out]\n \
-./preprocess.exe -join [small] [large] [out]\n \
+"Allowable usages:\n\
+./preprocess.exe -corners [filename]\n\
+./preprocess.exe -corners [filename] -ignore [ignore_rows]\n\
+./preprocess.exe -ssf [small] [large] [small_out] [large_out]\n\
+./preprocess.exe -join [small] [large] [out]\n\
 ./preprocess.exe -help\n";
 
 enum class Mode { CORNERS, SSF, JOIN };

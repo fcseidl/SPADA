@@ -6,7 +6,7 @@
 //  Copyright © 2020 Frank Seidl. All rights reserved.
 //
 
-#include "Preprocessing.hpp"
+#include "csvtools.hpp"
 #include "xcode_redirect.hpp"
 
 using namespace std;
@@ -120,7 +120,7 @@ Finally, print the dimensions of the array.
 
 Single-pass, O(num^2) space.
 */
-// TODO: code quality could be improved here :/
+// TODO: this is some spaghetti code right here, oh boy
 void print_corners(int num,
                    const string &filename,
                    char delim,
