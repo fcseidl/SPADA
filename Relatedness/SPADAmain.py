@@ -22,8 +22,27 @@ import RelatednessTesting as rt
 import SPADAutil as util
 
 
-# CH relatedness testing on simulated scRNA-seq datasets
+# CH relatedness testing on real datasets
 if 1:
+    '''
+    # word counts from blocks of 280 syllabus + abbey road album
+    Afile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags100_280_Abbey_Road.csv"
+    Bfile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags100_Abbey_Road_280.csv"
+    '''
+    
+    # word counts from blocks of 280 syllabus + abbey road album
+    Afile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags500_Munkres_Shakespeare.csv"
+    Bfile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags500_Shakespeare_Munkres.csv"
+    
+    print("Reading datasets...")
+    A = preprocessing.csvToMatrix(Afile)
+    B = preprocessing.csvToMatrix(Bfile)
+    
+    print("Performing CH testing...")
+    rt.clusterHeterogeneity(A, B)
+
+# CH relatedness testing on simulated scRNA-seq datasets
+if 0:
     n_genes = 273
     n_types = 3
     lam = 0.1

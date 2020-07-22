@@ -5,7 +5,7 @@ Created on Thu Jun 18 11:08:48 2020
 
 @author: fcseidl
 
-Tests to decide whether bulk and scRNA-seq datasets are joint.
+Tests to decide whether RNA-seq datasets are joint.
 """
 
 import numpy as np
