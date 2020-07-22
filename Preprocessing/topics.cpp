@@ -7,6 +7,7 @@
 //
 
 #include "topics.hpp"
+#include <iostream> // TODO: remove
 
 using namespace std;
 
@@ -17,15 +18,15 @@ using namespace std;
 void only_lowercase(string& str) {
     not_a_letter pred;
     remove_if(str.begin(), str.end(), pred);
-    for (char& c:str) {
-        if ('A' <= c && c <= 'Z') {
-            c = c - 'A' + 'a';
-        } else if (pred(c)) {
-            c = '\0';   // terminate string after all letters
+    for (size_t pos = 0; pos < str.size(); ++pos) {
+        if ('A' <= str[pos] && str[pos] <= 'Z') {
+            str[pos] = str[pos] - 'A' + 'a';  // convert upper to lower case
+        } else if (pred(str[pos])) {
+            str = str.substr(0, pos);
         }
-    } // for c
+    } // for pos
     // empty string?
-    if (str == "") str = "_";
+    if (str.empty()) str = "_";
 } // only_lowercase()
 
 
@@ -49,9 +50,9 @@ void WordBagger::write_csv(string& outfile, char delim) const {
     
     // write top column, with number label of each bag
     write_out << "word/bag" << delim;
-    for (size_t label = 0; label < num_bags; ++label)
+    for (size_t label = 0; label < num_bags - 1; ++label)
         write_out << label << delim;
-    write_out << '\n';
+    write_out << num_bags - 1 << '\n';
     
     // write bag counts for each word in no particular order
     for (auto& tuple:bag_counts) {
@@ -69,7 +70,7 @@ void WordBagger::write_csv(string& outfile, char delim) const {
             } else {
                 write_out << 0;
             } // if-else
-            write_out << delim;
+            if (bag < num_bags - 1) write_out << delim;     // delimiter for non-final bag
             ++bag;
         } // for each bag
         write_out << '\n';

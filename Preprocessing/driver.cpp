@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 
     // redirect input for Xcode debugging
     xcode_redirect(argc, argv);
-
+    
     // get arguments
     Arguments args = process_args(argc, argv);
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
             joiner.join(args.filenames[2]);
             break;
         }
-        
+
         case Mode::BAG: {
             WordBagger bagger(args.filenames[0], args.bag_size);
             bagger.write_csv(args.filenames[1], DEFAULT_DELIM);
