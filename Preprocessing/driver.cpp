@@ -102,6 +102,9 @@ Arguments process_args(int argc, char *argv[]) {
 } // process_args()
 
 
+// TODO: don't allow other delimiters besides ','
+// TODO: debug corners mode
+
 int main(int argc, char *argv[]) {
     // speeds up I/O
     ios_base::sync_with_stdio(false);

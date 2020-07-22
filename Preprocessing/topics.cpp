@@ -10,7 +10,10 @@
 
 using namespace std;
 
-// convert uppercase to lowercase, remove nonalphabetical characters
+/*
+ Convert uppercase to lowercase, remove nonalphabetical characters.
+ If this produces an empty string, replace with "_".
+ */
 void only_lowercase(string& str) {
     not_a_letter pred;
     remove_if(str.begin(), str.end(), pred);
@@ -21,6 +24,8 @@ void only_lowercase(string& str) {
             c = '\0';   // terminate string after all letters
         }
     } // for c
+    // empty string?
+    if (str == "") str = "_";
 } // only_lowercase()
 
 

@@ -26,7 +26,10 @@ struct not_a_letter {
     }
 };
 
-// convert uppercase to lowercase, remove other characters
+/*
+Convert uppercase to lowercase, remove nonalphabetical characters.
+If this produces an empty string, replace with "_".
+*/
 void only_lowercase(std::string& str);
 
 

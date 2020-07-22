@@ -45,7 +45,7 @@ public:
     /*
      Write a new csv file, out, with a row for each row name that is
      in both small and large. Each row is a concatenation of the corresponding
-     rows in small andlarge. The first row of the file contains two values,
+     rows in small and large. The first row of the file contains two values,
      [number of samples in small], [number of samples in large].
      */
     void join(std::string &out) const;
@@ -64,6 +64,9 @@ public:
 private:
     
     char delim;
+    
+    // header rows
+    std::string small_header, large_header;
     
     // map row names to rows
     std::unordered_map<std::string, std::string> rows_hash;

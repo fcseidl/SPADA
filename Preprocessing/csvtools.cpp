@@ -32,6 +32,10 @@ csvJoiner::csvJoiner(string &small,
     string row;
     ifstream read_small(small), read_large(large);
     
+    // read header rows
+    getline(read_small, small_header);
+    getline(read_large, large_header);
+    
     // read rows of first file, hash them by name
     while (getline(read_small, row)) {
         string row_name = first_token(row, delim);
@@ -50,7 +54,7 @@ csvJoiner::csvJoiner(string &small,
 /*
  Write a new csv file, out, with a row for each row name that is
  in both small and large. Each row is a concatenation of the corresponding
- rows in small andlarge. The first row of the file contains two values,
+ rows in small and large. The first row of the file contains two values,
  [number of samples in small], [number of samples in large].
  */
 void csvJoiner::join(std::string &out) const {
@@ -63,13 +67,18 @@ void csvJoiner::join(std::string &out) const {
     size_t large_width = (size_t)count(large_row.begin(), large_row.end(), delim);
     write_out << small_width << ',' << large_width << '\n';
     
+    // write header row
+    write_out << small_header;
+    string trimmed = large_header.substr(large_header.find(delim));
+    write_out << trimmed << '\n';
+    
     // write concatenated rows
     for (auto &pair:rows_bst) {
         const string &row_name = pair.first;
         const string &large_row = pair.second;
         const string &small_row = rows_hash.at(row_name);
         // must trim out name column of large file
-        string trimmed = large_row.substr(large_row.find(delim));
+        trimmed = large_row.substr(large_row.find(delim));
         write_out << small_row << ',' << trimmed << '\n';
     } // for matching rows
 } // join()
@@ -85,6 +94,10 @@ void csvJoiner::join(std::string &out) const {
 void csvJoiner::sorted_shared_features(const string &small_out,
                                        const string &large_out) const {
     ofstream write_small(small_out), write_large(large_out);
+    
+    // write headers
+    write_small << small_header << '\n';
+    write_large << large_header << '\n';
     
     // write matching rows in sorted order into both outfiles
     for (auto &pair:rows_bst) {
