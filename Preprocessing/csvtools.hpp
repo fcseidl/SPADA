@@ -33,12 +33,6 @@ std::string first_token(const std::string &line, char delims);
 
 // Combines data from two different csv files.
 class csvJoiner {
-    char delim;
-    
-    // map row names to rows
-    std::unordered_map<std::string, std::string> rows_hash;
-    std::map<std::string, std::string> rows_bst;
-    
 public:
     
     /*
@@ -66,6 +60,14 @@ public:
      */
     void sorted_shared_features(const std::string &small_out,
                                 const std::string &large_out) const;
+    
+private:
+    
+    char delim;
+    
+    // map row names to rows
+    std::unordered_map<std::string, std::string> rows_hash;
+    std::map<std::string, std::string> rows_bst;
 }; // csvJoiner
 
 
