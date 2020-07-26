@@ -22,9 +22,6 @@
 #include <unordered_map>
 
 
-const char DEFAULT_DELIM = ',';
-
-
 /*
  Return string containing first token of a line.
  */

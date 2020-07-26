@@ -184,9 +184,11 @@ void print_corners(size_t num,
             left.pop_front();
             right.pop_front();
         }
+        
         // proceed to next row
         ++row;
     } while (getline(readfile, line));
+    ++row;  // one more row counted
     
     // print "..." if rows were skipped, then bottom corners
     if (2 * num < row) cout << "...\n";

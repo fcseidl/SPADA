@@ -15,16 +15,39 @@
 
 using namespace std;
 
+const char DEFAULT_DELIM = ',';
+
 const size_t CORNER_SQUARE_SIZE = 4;
 
 const string USAGE =
-"Allowable usages:\n\
-./preprocess.exe -wordbag [infile] [outfile] [bag_size]\n\
-./preprocess.exe -corners [filename]\n\
-./preprocess.exe -corners [filename] -ignore [ignore_rows]\n\
-./preprocess.exe -ssf [small] [large] [small_out] [large_out]\n\
-./preprocess.exe -join [small] [large] [out]\n\
-./preprocess.exe -help\n";
+"Usage: please use one of the modes below.\n\
+\n\
+corners mode\n\
+------------\n\
+Supply the -corners flag, followed by the name of a rectangular csv file.\n\
+The optional argument -ignore [k] will ignore the first k rows.\n\
+\n\
+sorted shared features mode\n\
+---------------------------\n\
+Supply the -ssf flag, followed by four filenames:\n\
+-ssf [small] [large] [small_out] [large_out]\n\
+\n\
+join mode\n\
+---------\n\
+Supply the -join flag, followed by three filenames:\n\
+-join [small] [large] [out]\n\
+\n\
+word bagging mode\n\
+-----------------\n\
+Supply the -wordbag flag, followed by two filenames and a whole number:\n\
+-wordbag [infile] [outfile] [bag_size]\n\
+\n\
+help mode\n\
+---------\n\
+Supply the -help flag.\n\
+\n\
+For each mode, the delimiting character can be changed from a comma to\n\
+a tab with the optional -tsv flag.\n";
 
 enum class Mode { CORNERS, SSF, JOIN, BAG };
 
@@ -32,6 +55,7 @@ struct Arguments {
     Mode mode;
     int ignore_rows;         // only for corners mode
     int bag_size;            // only for wordbag mode
+    char delim;
     vector<string> filenames;
 }; // Arguments
 
@@ -47,6 +71,7 @@ void fail_if(bool condition) {
 
 Arguments process_args(int argc, char *argv[]) {
     Arguments result;
+    result.delim = DEFAULT_DELIM;
     for (int arg = 1; arg < argc; ++arg) {
         switch (argv[arg][1]) {
             case 'c':
@@ -81,6 +106,11 @@ Arguments process_args(int argc, char *argv[]) {
                 while (++arg < argc) result.filenames.emplace_back(argv[arg]);
                 fail_if(result.filenames.size() != 4);
                 break;
+            
+            case 't':
+                // -tsv flag for table delimiter
+                result.delim = '\t';
+                break;
                 
             case 'w':
                 // word bag mode, next args are infile, outfile, bag size
@@ -102,8 +132,7 @@ Arguments process_args(int argc, char *argv[]) {
 } // process_args()
 
 
-// TODO: don't allow other delimiters besides ','
-// TODO: debug corners mode
+// TODO: fully support other delimiters besides comma
 
 int main(int argc, char *argv[]) {
     // speeds up I/O
@@ -117,7 +146,7 @@ int main(int argc, char *argv[]) {
 
     switch (args.mode) {
         case Mode::CORNERS:
-            print_corners(CORNER_SQUARE_SIZE, args.filenames[0], DEFAULT_DELIM, args.ignore_rows);
+            print_corners(CORNER_SQUARE_SIZE, args.filenames[0], args.delim, args.ignore_rows);
             break;
 
         case Mode::SSF: {
