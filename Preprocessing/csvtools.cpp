@@ -113,9 +113,8 @@ void csvJoiner::sorted_shared_features(const string &small_out,
 
 /*
 Read a 2d array from a file. Rows are separated by newlines;
-columns are separated by any delimiters which appear in the
-parameter delims. Print the corner values of the array, using
-the following format:
+columns are separated by separated by a delimiting character.
+Print the corner values of the array, using the following format:
 
 1 1 1 ... 3 1 3
 4 1 3 ... 0 2 1
@@ -133,86 +132,72 @@ Finally, print the dimensions of the array.
 
 Single-pass, O(num^2) space.
 */
-// TODO: this is some spaghetti code right here, oh boy
-void print_corners(int num,
+void print_corners(size_t num,
                    const string &filename,
                    char delim,
                    int ignore_rows) {
     string line;
-    ifstream reader(filename);
-    deque< deque<string> > left(1);
-    deque< deque<string> > right(1);
-    char * ptr;
-    size_t row, col, num_cols, begin_right;
+    char * token;
+    ifstream readfile(filename);
+    deque< deque<string> > left;
+    deque< deque<string> > right;
+    size_t row = 0;             // row index
+    size_t width;               // total number of columns
+    size_t begin_right;         // column index of beginning of right-side corners
     
     // ignore first rows
-    for (int i = 0; i < ignore_rows; ++i) getline(reader, line);
+    for (int i = 0; i < ignore_rows; ++i) getline(readfile, line);
     
-    // read first line, determine column index at which right corners begin
-    getline(reader, line);
-    num_cols = 0;
-    ptr = strtok(&(line[0]), &delim);
-    while (ptr) {
-        string token(ptr);
-        if (num_cols < (size_t)num) {   // left gets first num entries
-            left[0].push_back(token);
-        } else {                // rightmost num entries in right
-            if (right[0].size() >= (size_t)num) right[0].pop_front();
-            right[0].push_back(token);
-        } // if-else
-        ptr = strtok(nullptr, &delim);
-        ++num_cols;
-    } // while token
-    begin_right = num_cols - right[0].size();
+    // read first line, determine num_cols and begin_right
+    getline(readfile, line);
+    width = (size_t)count(line.begin(), line.end(), delim) + 1;
+    begin_right = max(width - num, num);
     
-    // iterate over successive rows starting at second row
-    for (row = 1; getline(reader, line); ++row) {
-        if (row == (size_t)num) {
-            // if num rows read, then print top corners
-            for (size_t r = 0; r < (size_t)num; ++r) {
+    // iterate over successive rows
+    do {
+        // read ends of current row
+        string delim_str = "_";
+        delim_str[0] = delim;
+        token = strtok(&(line[0]), delim_str.c_str());
+        left.push_back(deque<string>());
+        right.push_back(deque<string>());
+        for (size_t col = 0; col < width; ++col) {
+            if (col < num) {
+                left.back().emplace_back(token);
+            } else if (col >= begin_right) {
+                right.back().emplace_back(token);
+            } // if-else
+            token = strtok(nullptr, delim_str.c_str());
+        } // for col
+        
+        // print if num rows reached, discard oldest row if past num rows
+        if (row == num) {
+            for (size_t r = 0; r < num; ++r) {
                 print_tsv(left[r]);
-                if (2 * (size_t)num < num_cols) cout << "...\t";
+                if (2 * num < width) cout << "...\t";
                 print_tsv(right[r]);
                 cout << '\n';
             } // for r
             left.clear();
             right.clear();
-        } else if (left.size() >= (size_t)num) {
-            // if more than num rows remembered, discard earliest remembered row
+        } else if (left.size() > num) {
             left.pop_front();
             right.pop_front();
-        } // if-else
-        
-        left.push_back(deque<string>());
-        right.push_back(deque<string>());
-        
-        // read new row
-        col = 0;
-        ptr = strtok(&(line[0]), &delim);
-        while (ptr) {
-            string token(ptr);
-            if (col < (size_t)num) {   // left gets first num entries
-                left.back().push_back(token);
-            } else if (col >= begin_right) {
-                right.back().push_back(token);
-            } // if-else
-            ptr = strtok(nullptr, &delim);
-            ++col;
-        } // while token
-    } // for row
+        }
+        // proceed to next row
+        ++row;
+    } while (getline(readfile, line));
     
-    // print bottom corners
-    if (row > 2 * (size_t)num) {    // are we skipping middle rows?
-        cout << "...\n";
-    }
+    // print "..." if rows were skipped, then bottom corners
+    if (2 * num < row) cout << "...\n";
     for (size_t r = 0; r < left.size(); ++r) {
         print_tsv(left[r]);
-        if (2 * (size_t)num < num_cols) cout << "...\t";
+        if (2 * num < width) cout << "...\t";
         print_tsv(right[r]);
         cout << '\n';
     } // for r
     
     // print dimensions
-    cout << "\nArray is " << row << " rows by " << num_cols << " columns.\n";
+    cout << "\nArray is " << row << " rows by " << width << " columns.\n";
 } // print_corners()
 

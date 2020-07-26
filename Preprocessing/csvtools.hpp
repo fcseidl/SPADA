@@ -13,11 +13,11 @@
 #include <string>
 #include <deque>
 #include <vector>
-#include <string.h>         // strtok
 #include <algorithm>        // max
 #include <iomanip>          // decimal precision
 #include <utility>          // pair
 #include <fstream>          // ifstream, ofstream
+#include <cstring>          // strtok
 #include <map>
 #include <unordered_map>
 
@@ -106,7 +106,7 @@ void print_tsv(const rangeType<eltType> & range) {
  
  Single-pass, O(num^2) space.
 */
-void print_corners(int num,
+void print_corners(size_t num,
                    const std::string &filename,
                    char delim,
                    int ignore_rows = 0);

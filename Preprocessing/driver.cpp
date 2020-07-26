@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const int CORNER_SQUARE_SIZE = 4;
+const size_t CORNER_SQUARE_SIZE = 4;
 
 const string USAGE =
 "Allowable usages:\n\
