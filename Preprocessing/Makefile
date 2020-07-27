@@ -6,6 +6,7 @@ preprocess: driver.cpp csvtools.cpp csvtools.hpp topics.cpp topics.hpp
 	$(CXX) $(CXXFLAGS) -c driver.cpp
 	$(CXX) $(CXXFLAGS) -c topics.cpp
 	$(CXX) $(CXXFLAGS) -o preprocess.exe driver.o csvtools.o topics.o
+	rm *.o
 	
 test: preprocess
 	./preprocess.exe -ssf test_names.csv test_authors.csv ssf_names.csv ssf_authors.csv
@@ -17,7 +18,6 @@ test: preprocess
 	./preprocess.exe -corners bags_abstract.csv
 
 clean:
-	rm *.o
 	rm *.exe
 	rm ssf*
 	rm *joint*
