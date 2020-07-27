@@ -11,6 +11,7 @@
 #include "xcode_redirect.hpp"
 #include "csvtools.hpp"
 #include "topics.hpp"
+#include "removal.hpp"
 
 
 using namespace std;
@@ -42,21 +43,26 @@ word bagging mode\n\
 Supply the -wordbag flag, followed by two filenames and a whole number:\n\
 -wordbag [infile] [outfile] [bag_size]\n\
 \n\
+removal mode\n\
+------------\n\
+Supply the -remove flag, followed by two file names and a string:\n\
+-remove [infile] [outfile] [remove]\n\
+\n\
 help mode\n\
 ---------\n\
 Supply the -help flag.\n\
 \n\
 For each mode, the delimiting character can be changed from a comma to\n\
-a tab with the optional -tsv flag.\n";
+a tab with the optional -tsv flag, or to a space with -psv.\n";
 
-enum class Mode { CORNERS, SSF, JOIN, BAG };
+enum class Mode { CORNERS, SSF, JOIN, BAG, REMOVE };
 
 struct Arguments {
     Mode mode;
     int ignore_rows;         // only for corners mode
     int bag_size;            // only for wordbag mode
     char delim;
-    vector<string> filenames;
+    vector<string> strings;
 }; // Arguments
 
 
@@ -78,7 +84,7 @@ Arguments process_args(int argc, char *argv[]) {
                 // corners mode, next arg must be a file name
                 result.mode = Mode::CORNERS;
                 fail_if(++arg >= argc);
-                result.filenames.emplace_back(argv[arg]);
+                result.strings.emplace_back(argv[arg]);
                 break;
                 
             case 'h':
@@ -96,15 +102,27 @@ Arguments process_args(int argc, char *argv[]) {
             case 'j':
                 // join mode, next 3 args are file names
                 result.mode = Mode::JOIN;
-                while (++arg < argc) result.filenames.emplace_back(argv[arg]);
-                fail_if(result.filenames.size() != 3);
+                while (++arg < argc) result.strings.emplace_back(argv[arg]);
+                fail_if(result.strings.size() != 3);
+                break;
+                
+            case 'p':
+                // -psv flag for space delimiter
+                result.delim = ' ';
+                break;
+                
+            case 'r':
+                // REMOVE mode, next 3 args are strings
+                result.mode = Mode::REMOVE;
+                while (++arg < argc) result.strings.emplace_back(argv[arg]);
+                fail_if(result.strings.size() != 3);
                 break;
                 
             case 's':
                 // SSF mode, next 4 args are file names
                 result.mode = Mode::SSF;
-                while (++arg < argc) result.filenames.emplace_back(argv[arg]);
-                fail_if(result.filenames.size() != 4);
+                while (++arg < argc) result.strings.emplace_back(argv[arg]);
+                fail_if(result.strings.size() != 4);
                 break;
             
             case 't':
@@ -115,8 +133,8 @@ Arguments process_args(int argc, char *argv[]) {
             case 'w':
                 // word bag mode, next args are infile, outfile, bag size
                 result.mode = Mode::BAG;
-                while (++arg < argc - 1) result.filenames.emplace_back(argv[arg]);
-                fail_if(result.filenames.size() != 2);
+                while (++arg < argc - 1) result.strings.emplace_back(argv[arg]);
+                fail_if(result.strings.size() != 2);
                 result.bag_size = atoi(argv[arg]);
                 break;
                 
@@ -133,6 +151,7 @@ Arguments process_args(int argc, char *argv[]) {
 
 
 // TODO: fully support other delimiters besides comma
+// TODO: allow null tokens!
 
 int main(int argc, char *argv[]) {
     // speeds up I/O
@@ -146,26 +165,30 @@ int main(int argc, char *argv[]) {
 
     switch (args.mode) {
         case Mode::CORNERS:
-            print_corners(CORNER_SQUARE_SIZE, args.filenames[0], args.delim, args.ignore_rows);
+            print_corners(CORNER_SQUARE_SIZE, args.strings[0], args.delim, args.ignore_rows);
             break;
 
         case Mode::SSF: {
-            csvJoiner joiner(args.filenames[0], args.filenames[1], DEFAULT_DELIM);
-            joiner.sorted_shared_features(args.filenames[2], args.filenames[3]);
+            csvJoiner joiner(args.strings[0], args.strings[1], DEFAULT_DELIM);
+            joiner.sorted_shared_features(args.strings[2], args.strings[3]);
             break;
         }
 
         case Mode::JOIN: {
-            csvJoiner joiner(args.filenames[0], args.filenames[1], DEFAULT_DELIM);
-            joiner.join(args.filenames[2]);
+            csvJoiner joiner(args.strings[0], args.strings[1], DEFAULT_DELIM);
+            joiner.join(args.strings[2]);
             break;
         }
 
         case Mode::BAG: {
-            WordBagger bagger(args.filenames[0], args.bag_size);
-            bagger.write_csv(args.filenames[1], DEFAULT_DELIM);
+            WordBagger bagger(args.strings[0], args.bag_size);
+            bagger.write_csv(args.strings[1], DEFAULT_DELIM);
             break;
         }
+        
+        case Mode::REMOVE:
+            remove_chars(args.strings[0], args.strings[1], args.strings[2]);
+            break;
 
         default:
             assert(false);
