@@ -29,7 +29,7 @@ string first_token(const string &line, char delim) {
 csvJoiner::csvJoiner(string &small,
                      string &large,
                      char delim) : delim(delim) {
-    string row;
+    string row, row_name;
     ifstream read_small(small), read_large(large);
     
     // read header rows
@@ -38,13 +38,13 @@ csvJoiner::csvJoiner(string &small,
     
     // read rows of first file, hash them by name
     while (getline(read_small, row)) {
-        string row_name = first_token(row, delim);
+        row_name = first_token(row, delim);
         rows_hash[row_name] = row;
     } // while reading 1
     
     // read rows of second file, storing them in map if they match rows in first
     while (getline(read_large, row)) {
-        string row_name = first_token(row, delim);
+        row_name = first_token(row, delim);
         if (rows_hash.count(row_name)) {
             rows_bst[row_name] = row;
         } // if
@@ -56,6 +56,8 @@ csvJoiner::csvJoiner(string &small,
  in both small and large. Each row is a concatenation of the corresponding
  rows in small and large. The first row of the file contains two values,
  [number of samples in small], [number of samples in large].
+ 
+ // TODO: support non comma delims?
  */
 void csvJoiner::join(std::string &out) const {
     ofstream write_out(out);
@@ -65,7 +67,7 @@ void csvJoiner::join(std::string &out) const {
     const string &large_row = rows_bst.begin()->second;
     size_t small_width = (size_t)count(small_row.begin(), small_row.end(), delim);
     size_t large_width = (size_t)count(large_row.begin(), large_row.end(), delim);
-    write_out << small_width << ',' << large_width << '\n';
+    write_out << small_width << delim << large_width << '\n';
     
     // write header row
     write_out << small_header;
@@ -79,7 +81,7 @@ void csvJoiner::join(std::string &out) const {
         const string &small_row = rows_hash.at(row_name);
         // must trim out name column of large file
         trimmed = large_row.substr(large_row.find(delim));
-        write_out << small_row << ',' << trimmed << '\n';
+        write_out << small_row << delim << trimmed << '\n';
     } // for matching rows
 } // join()
 
@@ -188,7 +190,6 @@ void print_corners(size_t num,
         // proceed to next row
         ++row;
     } while (getline(readfile, line));
-    ++row;  // one more row counted
     
     // print "..." if rows were skipped, then bottom corners
     if (2 * num < row) cout << "...\n";

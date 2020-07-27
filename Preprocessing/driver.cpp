@@ -53,7 +53,8 @@ help mode\n\
 Supply the -help flag.\n\
 \n\
 For each mode, the delimiting character can be changed from a comma to\n\
-a tab with the optional -tsv flag, or to a space with -psv.\n";
+a tab with the optional -tsv flag, or to a space with -psv. This flag must\n\
+be passed first.\n";
 
 enum class Mode { CORNERS, SSF, JOIN, BAG, REMOVE };
 
@@ -169,20 +170,20 @@ int main(int argc, char *argv[]) {
             break;
 
         case Mode::SSF: {
-            csvJoiner joiner(args.strings[0], args.strings[1], DEFAULT_DELIM);
+            csvJoiner joiner(args.strings[0], args.strings[1], args.delim);
             joiner.sorted_shared_features(args.strings[2], args.strings[3]);
             break;
         }
 
         case Mode::JOIN: {
-            csvJoiner joiner(args.strings[0], args.strings[1], DEFAULT_DELIM);
+            csvJoiner joiner(args.strings[0], args.strings[1], args.delim);
             joiner.join(args.strings[2]);
             break;
         }
 
         case Mode::BAG: {
             WordBagger bagger(args.strings[0], args.bag_size);
-            bagger.write_csv(args.strings[1], DEFAULT_DELIM);
+            bagger.write_csv(args.strings[1], args.delim);
             break;
         }
         
