@@ -6,6 +6,8 @@ ZIFA/
 
 *.xcodeproj
 
+sparse-subspace-clustering-python/
+
 *.exe
 
 RNAseq/
