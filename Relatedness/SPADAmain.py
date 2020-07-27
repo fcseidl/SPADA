@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import normalize
 from scipy import stats
 
-from ZIFA import ZIFA
+from ZIFA import ZIFA, block_ZIFA
 
 import preprocessing
 import simulations as sims
@@ -24,22 +24,41 @@ import SPADAutil as util
 
 # CH relatedness testing on real datasets
 if 1:
-    '''
-    # word counts from blocks of 280 syllabus + abbey road album
-    Afile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags100_280_Abbey_Road.csv"
-    Bfile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags100_Abbey_Road_280.csv"
-    '''
-    
-    # word counts from blocks of 280 syllabus + abbey road album
-    Afile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags500_Munkres_Shakespeare.csv"
-    Bfile = "/Users/fcseidl/Documents/SPADA/texts/ssf_bags500_Shakespeare_Munkres.csv"
+    # pancreas scRNA-seq
+    Afile = "/Users/fcseidl/Documents/SPADA/RNAseq/pancreas/ssf_CEL-seq.tsv"
+    Bfile = "/Users/fcseidl/Documents/SPADA/RNAseq/pancreas/ssf_CEL-seq2.tsv"
     
     print("Reading datasets...")
-    A = preprocessing.csvToMatrix(Afile)
-    B = preprocessing.csvToMatrix(Bfile)
+    A = preprocessing.csvToMatrix(Afile, delim='\t')
+    B = preprocessing.csvToMatrix(Bfile, delim='\t')
+    
+    L = 150
+    A = np.random.permutation(A)
+    B = np.random.permutation(B)
+    A = A[:, :L]
+    B = B[:, :L]
+    
+    print("Removing sparse genes from both datasets...")
+    def sparse(Yn):
+        return util.dropoutRate(Yn) > 0.85
+    A, B = preprocessing.removeRowsPred(A, B, sparse)
+    B, A = preprocessing.removeRowsPred(B, A, sparse)
+    
+    print("Preprocessing for ZIFA...")
+    join = np.concatenate((A, B), axis=1)  # joined data matrices
+    join = preprocessing.ZIFApreprocessing(join)
+    
+    print("Performing block ZIFA...")
+    join, _ = block_ZIFA.fitModel(join.T, 10)
+    join = join.T
+    A = join[:, :L]
+    B = join[:, L:]
     
     print("Performing CH testing...")
     rt.clusterHeterogeneity(A, B)
+    
+    print("Performing CH testing on parts of larger dataset for comparison...")
+    
 
 # CH relatedness testing on simulated scRNA-seq datasets
 if 0:

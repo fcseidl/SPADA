@@ -131,6 +131,7 @@ def removeRowsPred(X, Y, pred):
         if pred(Y[n]): indices.append(n)
     X = np.delete(X, indices, axis=0)
     Y = np.delete(Y, indices, axis=0)
+    print("Removed", len(indices), "rows.")
     return X, Y
 
 
