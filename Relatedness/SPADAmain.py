@@ -315,35 +315,6 @@ if 0:
     plt.plot(np.arange(len(V)), V)
     plt.xlabel("gene")
     plt.ylabel("variance")
-
-# sample from 2d unit sphere first quadrant
-if 0:
-    points = util.uniformFromUnitSphere(2, 200)
-    
-    # reflect to positive orthant
-    points = np.abs(points)
-    
-    # 2d case
-    plt.scatter(
-        points[:, 0],
-        points[:, 1],
-        )
-
-# sample from 3d unit sphere positive orthant
-if 0:
-    points = util.uniformFromUnitSphere(3, 200)
-    
-    # reflect to positive orthant
-    points = np.abs(points)
-    
-    # 3d case
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(
-        points[:, 0],
-        points[:, 1],
-        points[:, 2]
-        )
     
 # Plot description of means and variances in real scRNA-seq data
 if 0:
@@ -431,35 +402,6 @@ if 0:
     ax.set_ylabel("dropout rate")
     fig.tight_layout()
     plt.show()
-
-# sample from 2d unit sphere first quadrant
-if 0:
-    points = util.uniformFromUnitSphere(2, 200)
-    
-    # reflect to positive orthant
-    points = np.abs(points)
-    
-    # 2d case
-    plt.scatter(
-        points[:, 0],
-        points[:, 1],
-        )
-
-# sample from 3d unit sphere positive orthant
-if 0:
-    points = util.uniformFromUnitSphere(3, 200)
-    
-    # reflect to positive orthant
-    points = np.abs(points)
-    
-    # 3d case
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(
-        points[:, 0],
-        points[:, 1],
-        points[:, 2]
-        )
 
 # assess similarity of profiles in islets and 3cl
 if 0:
