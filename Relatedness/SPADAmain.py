@@ -32,11 +32,14 @@ if 1:
     A = preprocessing.csvToMatrix(Afile, delim='\t')
     B = preprocessing.csvToMatrix(Bfile, delim='\t')
     
+    print("Preprocessing subset of the data...")
     L = 150
     A = np.random.permutation(A)
     B = np.random.permutation(B)
     A = A[:, :L]
     B = B[:, :L]
+    A = normalize(A)    # cosine normalization
+    B = normalize(B)
     
     print("Removing sparse genes from both datasets...")
     def sparse(Yn):
@@ -44,6 +47,8 @@ if 1:
     A, B = preprocessing.removeRowsPred(A, B, sparse)
     B, A = preprocessing.removeRowsPred(B, A, sparse)
     
+    '''
+    # ZIFA makes matters worse
     print("Preprocessing for ZIFA...")
     join = np.concatenate((A, B), axis=1)  # joined data matrices
     join = preprocessing.ZIFApreprocessing(join)
@@ -53,11 +58,13 @@ if 1:
     join = join.T
     A = join[:, :L]
     B = join[:, L:]
+    '''
     
     print("Performing CH testing...")
     rt.clusterHeterogeneity(A, B)
     
-    print("Performing CH testing on parts of larger dataset for comparison...")
+    print("Clustering one dataset alone...")
+    util.bestSilhouetteKMeans(A, max_n_clusters=20)
     
 
 # CH relatedness testing on simulated scRNA-seq datasets

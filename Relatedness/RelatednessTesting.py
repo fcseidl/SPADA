@@ -158,7 +158,6 @@ def clusterHeterogeneity(A, B, n_clusters=-1):
     # perform clustering
     if n_clusters < 2:
         K, centers, labels = util.bestSilhouetteKMeans(AB.T, max_n_clusters=20)
-        print(K, "clusters chosen to maximize average silhouette score")
     else:
         K = n_clusters
         kmeans = KMeans(n_clusters=K)
