@@ -9,10 +9,15 @@ Various auxiliary methods for SPADA research.
 """
 
 import numpy as np
-from scipy.optimize import linprog, minimize
-from sklearn.preprocessing import normalize
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+
+# from sparse-subspace-clustering-python
+from BuildAdjacency import BuildAdjacency
+from OutlierDetection import OutlierDetection
+from BestMap import BestMap
+from SpectralClustering import SpectralClustering
+from SparseCoefRecovery import SparseCoefRecovery
 
 
 def bestSilhouetteKMeans(X, max_n_clusters=10):
@@ -48,7 +53,27 @@ def bestSilhouetteKMeans(X, max_n_clusters=10):
             score_best = score
             centers = kmeans.cluster_centers_
             labels = kmeans.labels_
+    print(k_best, "clusters chosen to maximize average silhouette score")
     return k_best, centers, labels
+
+
+def subspaceClustering(X, affine=False, OptM='Lasso', lam=1e-2):
+    # TODO: docstring
+    D, N = X.shape
+    # express data as sparse combinations of each other
+    C = SparseCoefRecovery(X, Cst=affine, OptM=OptM, lmbda=lam)
+    # Make small values 0
+    eps = np.finfo(float).eps
+    C[np.abs(C) < eps] = 0
+    # dummy ground truth for outlier detection
+    dummy = np.ones(N)
+    # detect and remove outliers
+    C, dummy, OutlierIndx, Fail = OutlierDetection(CMat, dummy)
+    if not Fail:
+        adj = BuildAdjacency(C, K=0)  # K=0 to keep all edges
+        # TODO: do spectral clustering, how to decide number of clusters?
+    
+    
 
 
 def dropoutRate(Yn):
