@@ -23,7 +23,7 @@ import SPADAutil as util
 
 
 # CH relatedness testing on real datasets
-if 1:
+if 0:
     # pancreas scRNA-seq
     Afile = "/Users/fcseidl/Documents/SPADA/RNAseq/pancreas/ssf_CEL-seq.tsv"
     Bfile = "/Users/fcseidl/Documents/SPADA/RNAseq/pancreas/ssf_CEL-seq2.tsv"
@@ -64,11 +64,11 @@ if 1:
     rt.clusterHeterogeneity(A, B)
     
     print("Clustering one dataset alone...")
-    util.bestSilhouetteKMeans(A, max_n_clusters=20)
+    util.maxSilhouetteClusters(A, util.kMeansClustering)
     
 
 # CH relatedness testing on simulated scRNA-seq datasets
-if 0:
+if 1:
     n_genes = 273
     n_types = 3
     lam = 0.1
@@ -85,6 +85,7 @@ if 0:
     _, Y2 = sims.simulateJointData(L=Lsmall, A=A1, alpha=alpha1, lam=lam)
     _, Y3 = sims.simulateJointData(L=Lsmall, A=A2, lam=lam) # unrelated
     
+    '''
     print("\nPreprocessing Y1 and Y2 for ZIFA...")
     Y12 = np.concatenate((Y1, Y2), axis=1)  # joined data matrices
     Y12 = preprocessing.ZIFApreprocessing(Y12)
@@ -98,38 +99,23 @@ if 0:
     Y12 = Y12.T             # dim-reduced joined data matrix
     Y1 = Y12[:, :Lbig]      # columns corresponding to Y1
     Y2 = Y12[:, -Lsmall:]   # columns corresponding to Y2
+    '''
     
     # TODO: avoid using n_types, hidden info
     print("\nCluster heterogeneity on Y1 and Y2 (expect high heterogeneity):")
     rt.clusterHeterogeneity(Y1, Y2)#, n_clusters=n_types)
     
+    '''
     print("\nPerforming ZIFA on data Y1 and Y3...")
     Y13, _ = ZIFA.fitModel(Y13.T, n_components)
     Y13 = Y13.T
     Y1 = Y13[:, :Lbig]
     Y3 = Y13[:, -Lsmall:]
+    '''
     
     print("\nCH on Y1 and Y3 (expect low heterogeneity):")
     rt.clusterHeterogeneity(Y1, Y3)#, n_clusters=2*n_types)
-
-# how much variance is explained by principal components?
-if 0:
-    '''
-    print("Dataset: pancreatic islets single cell")
-    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_islets_sc.csv"
-    '''
-    print("Dataset: 3cl single cell")
-    scfile = "/Users/fcseidl/Documents/SPADA/SPADA/datasets/ssf_3cl_sc.csv"
     
-    print("Reading data matrix Y...")
-    Y = preprocessing.csvToMatrix(scfile)
-    
-    print("Performing PCA...")
-    pca = PCA(n_components=0.9)   # Explain at least 90% of variance
-    pca.fit(Y.T)
-    
-    print("Inferred dimensionality:", pca.components_.shape[0])
-    print("Explained percentages of variance:", pca.explained_variance_ratio_)
 
 # hypothesis testing with 2 real datasets
 if 0:

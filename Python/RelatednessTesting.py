@@ -157,11 +157,11 @@ def clusterHeterogeneity(A, B, n_clusters=-1):
     
     # perform clustering
     if n_clusters < 2:
-        K, centers, labels = util.bestSilhouetteKMeans(AB.T, max_n_clusters=20)
+        K, labels = \
+            util.maxSilhouetteClusters(AB.T, util.kMeansClustering)
     else:
         K = n_clusters
-        kmeans = KMeans(n_clusters=K)
-        labels = kmeans.fit_predict(AB.T)
+        labels = util.kMeansClustering(AB.T, n_clusters)
     
     # Identify cluster of each datapoint. 
     # CA[k] is the number of points from cluster k in A.
