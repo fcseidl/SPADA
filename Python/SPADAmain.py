@@ -32,20 +32,20 @@ if 1:
     A = preprocessing.csvToMatrix(Afile, delim='\t')
     B = preprocessing.csvToMatrix(Bfile, delim='\t')
     
-    print("Preprocessing subset of the data...")
-    L = 150
-    A = np.random.permutation(A)
-    B = np.random.permutation(B)
-    A = A[:, :L]
-    B = B[:, :L]
-    A = normalize(A)    # cosine normalization
-    B = normalize(B)
-    
     print("Removing sparse genes from both datasets...")
     def sparse(Yn):
         return util.dropoutRate(Yn) > 0.85
     A, B = preprocessing.removeRowsPred(A, B, sparse)
     B, A = preprocessing.removeRowsPred(B, A, sparse)
+    
+    print("Applying cosine normalization to samples...")
+    L = 150
+    A = np.random.permutation(A)
+    B = np.random.permutation(B)
+    A = A[:, :L]
+    B = B[:, :L]
+    A = normalize(A)
+    B = normalize(B)
     
     '''
     # ZIFA makes matters worse

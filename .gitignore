@@ -6,7 +6,7 @@ ZIFA/
 
 *.xcodeproj
 
-sparse-subspace-clustering-python/
+*/SSCpy/
 
 *.exe
 
