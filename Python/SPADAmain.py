@@ -16,6 +16,8 @@ from scipy import stats
 
 from ZIFA import ZIFA, block_ZIFA
 
+from SSC import sparseSubspaceClustering
+
 import preprocessing
 import simulations as sims
 import RelatednessTesting as rt
@@ -23,7 +25,7 @@ import SPADAutil as util
 
 
 # CH relatedness testing on real datasets
-if 0:
+if 1:
     # pancreas scRNA-seq
     Afile = "/Users/fcseidl/Documents/SPADA/RNAseq/pancreas/ssf_CEL-seq.tsv"
     Bfile = "/Users/fcseidl/Documents/SPADA/RNAseq/pancreas/ssf_CEL-seq2.tsv"
@@ -34,12 +36,12 @@ if 0:
     
     print("Removing sparse genes from both datasets...")
     def sparse(Yn):
-        return util.dropoutRate(Yn) > 0.85
+        return util.dropoutRate(Yn) > 0.6
     A, B = preprocessing.removeRowsPred(A, B, sparse)
     B, A = preprocessing.removeRowsPred(B, A, sparse)
     
     print("Applying cosine normalization to samples...")
-    L = 150
+    L = 100
     A = np.random.permutation(A)
     B = np.random.permutation(B)
     A = A[:, :L]
@@ -47,28 +49,27 @@ if 0:
     A = normalize(A)
     B = normalize(B)
     
-    '''
-    # ZIFA makes matters worse
-    print("Preprocessing for ZIFA...")
-    join = np.concatenate((A, B), axis=1)  # joined data matrices
-    join = preprocessing.ZIFApreprocessing(join)
-    
-    print("Performing block ZIFA...")
-    join, _ = block_ZIFA.fitModel(join.T, 10)
-    join = join.T
-    A = join[:, :L]
-    B = join[:, L:]
-    '''
-    
     print("Performing CH testing...")
-    rt.clusterHeterogeneity(A, B)
     
-    print("Clustering one dataset alone...")
-    util.maxSilhouetteClusters(A, util.kMeansClustering)
+    print("KMeans clustering, determining number of clusters with average silhouette method:")
+    n_clust = 8
+    AB = np.concatenate((A, B), axis=1) # joint data matrix
+    n_clust, labels = util.maxSilhouetteClusters(AB.T, util.kMeansClustering)
+    clusterer = lambda X : (n_clust, labels)
+    clusterer = lambda X : (n_clust, util.kMeansClustering(X, n_clust))
+    rt.clusterHeterogeneity(A, B, clusterer)
+    
+    print("Linear sparse subspace clustering:")
+    clusterer = lambda X : (n_clust, sparseSubspaceClustering(X, n_clust, OptM="L1Noise")[0])
+    rt.clusterHeterogeneity(A, B, clusterer)
+    
+    print("Affine sparse subspace clustering:")
+    clusterer = lambda X : (n_clust, sparseSubspaceClustering(X, n_clust, affine=True, OptM="L1Noise")[0])
+    rt.clusterHeterogeneity(A, B, clusterer)
     
 
 # CH relatedness testing on simulated scRNA-seq datasets
-if 1:
+if 0:
     n_genes = 273
     n_types = 3
     lam = 0.1
@@ -84,6 +85,10 @@ if 1:
     _, Y1 = sims.simulateJointData(L=Lbig, A=A1, alpha=alpha1, lam=lam)
     _, Y2 = sims.simulateJointData(L=Lsmall, A=A1, alpha=alpha1, lam=lam)
     _, Y3 = sims.simulateJointData(L=Lsmall, A=A2, lam=lam) # unrelated
+    
+    Y1 = normalize(Y1)
+    Y2 = normalize(Y2)
+    Y3 = normalize(Y3)
     
     '''
     print("\nPreprocessing Y1 and Y2 for ZIFA...")
@@ -101,9 +106,12 @@ if 1:
     Y2 = Y12[:, -Lsmall:]   # columns corresponding to Y2
     '''
     
-    # TODO: avoid using n_types, hidden info
     print("\nCluster heterogeneity on Y1 and Y2 (expect high heterogeneity):")
-    rt.clusterHeterogeneity(Y1, Y2)#, n_clusters=n_types)
+    n_clust = 3
+    #clusterer = lambda X : (n_clust, util.kMeansClustering(X, n_clust))
+    #clusterer = lambda X : util.maxSilhouetteClusters(X, util.kMeansClustering)
+    clusterer = lambda X : (n_clust, sparseSubspaceClustering(X, n_clust, affine=True)[0])
+    rt.clusterHeterogeneity(Y1, Y2, clusterer)
     
     '''
     print("\nPerforming ZIFA on data Y1 and Y3...")
@@ -114,7 +122,7 @@ if 1:
     '''
     
     print("\nCH on Y1 and Y3 (expect low heterogeneity):")
-    rt.clusterHeterogeneity(Y1, Y3)#, n_clusters=2*n_types)
+    rt.clusterHeterogeneity(Y1, Y3, clusterer)
     
 
 # hypothesis testing with 2 real datasets

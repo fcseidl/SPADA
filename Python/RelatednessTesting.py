@@ -14,6 +14,8 @@ import SPADAutil as util
 from scipy.optimize import nnls
 from sklearn.cluster import KMeans
 
+import matplotlib.pyplot as plt
+
 
 def residualsToCone(X, Y):
     """
@@ -130,65 +132,77 @@ def identifyJointDatasets(bulkfile, scfile, delim=',', quiet=False):
     return p
 
 
-def clusterHeterogeneity(A, B, n_clusters=-1):
+def clusterHeterogeneity(A, B, clusterer):
     """
     Assess relatedness of two data matrices using cluster heterogeneity 
     technique.
 
     Parameters
     ----------
-    A : array, shape (F, M)
-        First data matrix, with F features and N samples.
-    B : array, shape (F, N)
-        Second data matrix, with F feature and M samples.
-    n_clusters : int, optional
-        Number of clusters to use. By default, this is chosen dynamically 
-        using the average silhouette method.
+    A : array, shape (n_feat, n_samp_A)
+        First data matrix.
+    B : array, shape (n_feat, n_samp_B)
+        Second data matrix.
+    clusterer : callable
+        Function which implements a clustering algorithm. Receives data 
+        matrix of shape (n_samples, n_features) as input, and returns 
+        n_clusters, labels.
 
     Returns
     -------
-    Unrelatedness score of A and B.
+    A relatedness score which is close to 0.25 if the clustering algorithm is
+    unable to distinguish the two datasets, and close to 0 if it is.
     
     """
-    F, M = A.shape
-    N = B.shape[1]
-    assert(B.shape[0] == F)     # both datasets have same number of features
-    AB = np.concatenate((A, B), axis=1)
+    n_feat, n_samp_A = A.shape
+    n_samp_B = B.shape[1]
+    assert(B.shape[0] == n_feat) # both datasets have same number of features
+    AB = np.concatenate((A, B), axis=1) # joint data matrix
     
-    # perform clustering
-    if n_clusters < 2:
-        K, labels = \
-            util.maxSilhouetteClusters(AB.T, util.kMeansClustering)
-    else:
-        K = n_clusters
-        labels = util.kMeansClustering(AB.T, n_clusters)
+    # perform clustering (must transpose joint matrix)
+    n_clusters, labels = clusterer(AB.T)
     
     # Identify cluster of each datapoint. 
     # CA[k] is the number of points from cluster k in A.
     # CB[k] is the number of points from cluster k in B. 
     # C[k] is the size of cluster k.
-    CA = np.zeros(K, dtype=int)
-    CB = np.zeros(K, dtype=int)
-    C = np.zeros(K, dtype=int)
-    for k in labels[:M]:        # labels of samples of A
+    CA = np.zeros(n_clusters, dtype=int)
+    CB = np.zeros(n_clusters, dtype=int)
+    C = np.zeros(n_clusters, dtype=int)
+    for k in labels[:n_samp_A]:        # labels of samples of A
         CA[k] += 1
         C[k] += 1
-    for k in labels[-N:]:       # labels of samples of B
+    for k in labels[n_samp_A:]:       # labels of samples of B
         CB[k] += 1
         C[k] += 1
     
     # overall heterogeneity
-    h = M * N / (M + N)**2
+    h = n_samp_A * n_samp_B / (n_samp_A + n_samp_B)**2
     
     # cluster heterogeneities
-    H = [ CA[k] * CB[k] / C[k]**2 for k in range(K) ]
+    H = [ CA[k] * CB[k] / C[k]**2 for k in range(n_clusters) ]
     
     # unified cluster heterogeneity score
     #h_star = 1 / (M + N) * sum([ C[k] * H[k] for k in range(K) ])
-    h_star = sum(H) / K
+    h_star = sum(H) / n_clusters
     
     print("Unified cluster heterogeneity score =", h_star)
     print("Overall heterogeneity =", h)
+    
+    ind = np.arange(n_clusters) 
+    clusters = [ k for k in range(n_clusters) ]
+    width = 0.35       
+    plt.bar(ind, CA, width, label='A')
+    plt.bar(ind + width, CB, width,
+        label='B')
+    
+    plt.ylabel('Number of points from dataset')
+    plt.xlabel('Cluster')
+    plt.title('Cluster composition')
+    
+    plt.xticks(ind + width / 2, clusters)
+    plt.legend(loc='best')
+    plt.show()
     
     return h_star / h
     

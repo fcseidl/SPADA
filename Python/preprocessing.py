@@ -11,39 +11,6 @@ Preprocessing bulk and scRNA-seq data.
 import numpy as np
 import csv
 
-'''
-# TODO: finish this?
-class Thresholder:
-    """
-    A Thresholder object over a matrix Y determines which rows Y[n] have 
-    coefficient of variation / variance exceeding a threshold.
-    """
-    
-    stats = {'var_coef': lambda Yn : np.sqrt(np.var(Yn)) / Yn.mean(),
-             'var' : np.var}
-    
-    def __init__(self, Y, attribute='var_coef'):
-        """
-        Construct a Thresholder over a 2d array Y which applies thresholds to 
-        a particular attribute of each row in Y. Default attribute is the 
-        coefficient of variation.
-        """
-        self.attribute = attribute
-        fun = self.stats[attribute]
-        self.values = [ fun(Yn) for Yn in Y ]
-        
-    ### choose the threshold which includes only data with 
-    ##def _choose_threshold(self):
-        
-    
-    def selectRows(self, threshold):
-        """
-        Return list of row indices which exceed threshold.
-        """
-        return [ n for n in range(len(self.values)) 
-                if self.values[n] >= threshold ]
-'''
-
 
 def ZIFApreprocessing(Y):
     """
@@ -131,7 +98,7 @@ def removeRowsPred(X, Y, pred):
         if pred(Y[n]): indices.append(n)
     X = np.delete(X, indices, axis=0)
     Y = np.delete(Y, indices, axis=0)
-    print("Removed", len(indices), "rows.")
+    print("Removed", len(indices), "out of", N, "rows.")
     return X, Y
 
 
