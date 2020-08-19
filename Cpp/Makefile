@@ -13,16 +13,12 @@ test: preprocess
 	./preprocess.exe -ssf test_names.csv test_authors.csv ssf_names.csv ssf_authors.csv
 	./preprocess.exe -corners ssf_names.csv
 	./preprocess.exe -corners ssf_authors.csv
-	./preprocess.exe -join test_names.csv test_authors.csv test_names_authors_joint.csv
-	./preprocess.exe -corners test_names_authors_joint.csv -ignore 1
+	#./preprocess.exe -join test_names.csv test_authors.csv test_names_authors_joint.csv
+	#./preprocess.exe -corners test_names_authors_joint.csv -ignore 1
 	./preprocess.exe -wordbag abstract.txt bags_abstract.csv 5
 	./preprocess.exe -corners bags_abstract.csv
 	./preprocess.exe -remove test_names.csv remove_b_test_names.csv b
 	cat remove_b_test_names.csv
 
 clean:
-	rm *.exe
-	rm ssf*
-	rm *joint*
-	rm bags*
-	rm remove*
+	rm *.exe ssf* *joint* bags* remove*

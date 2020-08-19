@@ -44,6 +44,9 @@ public:
      in both small and large. Each row is a concatenation of the corresponding
      rows in small and large. The first row of the file contains two values,
      [number of samples in small], [number of samples in large].
+     
+     // TODO: support non comma delims?
+     // TODO: avoid inserting consecutive delimiting characters
      */
     void join(std::string &out) const;
     

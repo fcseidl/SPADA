@@ -58,6 +58,7 @@ csvJoiner::csvJoiner(string &small,
  [number of samples in small], [number of samples in large].
  
  // TODO: support non comma delims?
+ // TODO: avoid inserting consecutive delimiting characters
  */
 void csvJoiner::join(std::string &out) const {
     ofstream write_out(out);
@@ -150,13 +151,17 @@ void print_corners(size_t num,
     // ignore first rows
     for (int i = 0; i < ignore_rows; ++i) getline(readfile, line);
     
-    // read first line, determine num_cols and begin_right
+    // read first line, determine width and begin_right
     getline(readfile, line);
     width = (size_t)count(line.begin(), line.end(), delim) + 1;
     begin_right = max(width - num, num);
     
     // iterate over successive rows
     do {
+        if ((size_t)count(line.begin(), line.end(), delim) + 1 != width) {
+            cout << "\nError: cannot print corners of ragged array.\n";
+            exit(1);
+        }
         // read ends of current row
         string delim_str = "_";
         delim_str[0] = delim;
