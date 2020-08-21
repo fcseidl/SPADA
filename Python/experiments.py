@@ -10,8 +10,11 @@ Functions to generate data and visualizations for tech report.
 
 import numpy as np
 from sklearn.preprocessing import normalize
+from sklearn.metrics import normalized_mutual_info_score
+import matplotlib.pyplot as plt
 
 from BestMap import BestMap
+from SSC import sparseSubspaceClustering
 
 import preprocessing
 import simulations as sims
@@ -32,6 +35,11 @@ def mouse_brain_test(clusterer):
         "/Users/fcseidl/Documents/SPADA/RNAseq/mouse_brain/ssf_campbell.tsv", 
         delim='\t')
     
+    '''
+    _, chen = sims.simulateJointData()
+    _, campbell = sims.simulateJointData()
+    '''
+     
     print("Removing sparse genes from both datasets...")
     def sparse(Yn):
         return util.dropoutRate(Yn) > 0.8
@@ -61,13 +69,67 @@ def mouse_brain_test(clusterer):
         print("Clustering both datasets together...")
         joint = np.concatenate((chen, campbell), axis=1)
         joint_lbls = clusterer(joint.T, k)
-        chen_joint_lbls = BestMap(chen_lbls, joint_lbls[:L])
-        campbell_joint_lbls = BestMap(campbell_lbls, joint_lbls[L:])
         
-        print("breakpoint passed")
-
+        print("NMI between chen separate and joint labels =",
+              normalized_mutual_info_score(chen_lbls, joint_lbls[:L]))
+        
+        print("NMI between campbell separate and joint labels =",
+              normalized_mutual_info_score(campbell_lbls, joint_lbls[L:]))
+        
+        print("Plotting cluster composition bar chart...")
+        joint_distribution = np.zeros(k)
+        chen_distribution = np.zeros((k, k))
+        for c,j in zip(chen_lbls, joint_lbls[:L]):
+            chen_distribution[int(c)][int(j)] += 1
+            joint_distribution[j] += 1
+        campbell_distribution = np.zeros((k, k))
+        for c,j in zip(campbell_lbls, joint_lbls[L:]):
+            campbell_distribution[int(c)][int(j)] += 1
+            joint_distribution[j] += 1
+        
+        '''
+        fig, ax = plt.subplots()
+        
+        size = 0.3
+        cmap = plt.get_cmap("tab20c")
+        #outer_colors = cmap(np.arange(k))
+        #inner_colors = np.concatenate([ outer_colors for _ in range(k) ])
+        
+        ax.pie(joint_distribution, radius=1, #colors=outer_colors,
+               wedgeprops=dict(width=size, edgecolor='w'))
+        
+        ax.pie(joint_distribution.flatten(), radius=1-size, #colors=inner_colors,
+               wedgeprops=dict(width=size, edgecolor='w'))
+        
+        ax.set(aspect="equal", title='cluster composition')
+        plt.show()
+        '''
+        
+        index = np.arange(k)
+        ticks = np.arange(k)
+        width = 0.35
+        y_offset = np.zeros(k)
+        
+        plt.bar(index + width, joint_distribution, width, label=("joint"))
+        
+        for c in range(k):
+            plt.bar(index, chen_distribution[c], width, bottom=y_offset, 
+                    label=("chen %d" % c))
+            y_offset += chen_distribution[c]
+            plt.bar(index, campbell_distribution[c], width, bottom=y_offset,
+                    label=("campbell %d" % c))
+            y_offset += campbell_distribution[c]
+            
+        plt.ylabel('number of points from dataset')
+        plt.xlabel('joint cluster')
+        plt.title('Cluster Composition')
+        plt.xticks(index + width / 2, ticks)
+        plt.legend(loc='best')
+        plt.show()
+        
 
 if __name__ == "__main__":
-    mouse_brain_test(util.kMeansClustering)
+    mouse_brain_test(sparseSubspaceClustering)
+    #mouse_brain_test(util.kMeansClustering)
     
     
