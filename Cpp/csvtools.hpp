@@ -17,6 +17,7 @@
 #include <iomanip>          // decimal precision
 #include <utility>          // pair
 #include <fstream>          // ifstream, ofstream
+#include <sstream>          // istringstream
 #include <cstring>          // strtok
 #include <map>
 #include <unordered_map>
@@ -110,5 +111,15 @@ void print_corners(size_t num,
                    const std::string &filename,
                    char delim,
                    int ignore_rows = 0);
+
+
+/*
+ Replace the title column of a csv file with a given column from another file.
+ */
+void subst_title_col(const std::string& infile,
+                     const std::string& outfile,
+                     const std::string& substfile,
+                     int col,
+                     char delim);
 
 #endif /* Preprocessing_hpp */

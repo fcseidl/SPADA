@@ -12,16 +12,24 @@
 #include <string>
 #include <fstream>       // ifstream, ofstream
 #include <algorithm>     // remove_if
-
-//// functor to determine whether a character belongs to a string
-//struct in_string {
-//    const std::string& str;
-//    bool operator()(char c) { return str.find(c) < str.size(); }
-//};
+#include <cassert>
 
 /*
  Write contents of one file to a new file, excluding every character which appears in a string.
+ Second file must be different!
  */
-void remove_chars(std::string& infile, std::string& outfile, std::string& chars);
+void remove_chars(const std::string& infile,
+                  const std::string& outfile,
+                  const std::string& chars);
+
+
+/*
+ Write contents of one file to a new file, performing character substitutions according to
+ in[i] -> out[i]. Second file must be different!
+ */
+void subst_chars(const std::string& infile,
+                 const std::string& outfile,
+                 const std::string& in,
+                 const std::string& out);
 
 #endif /* removal_hpp */

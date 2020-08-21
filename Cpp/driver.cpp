@@ -48,6 +48,16 @@ removal mode\n\
 Supply the -remove flag, followed by two file names and a string:\n\
 -remove [infile] [outfile] [remove]\n\
 \n\
+alter mode\n\
+----------\n\
+Supply the -alter flag, followed by two file names and two strings:\n\
+-alter [infile] [outfile] [remove] [replacements]\n\
+new titles mode\n\
+\n\
+----------\n\
+Supply the -newtitles flag, followed by three filenames and a whole number:\n\
+-newtitles [infile] [outfile] [substfile] [col]\n\
+\n\
 help mode\n\
 ---------\n\
 Supply the -help flag.\n\
@@ -56,12 +66,13 @@ For each mode, the delimiting character can be changed from a comma to\n\
 a tab with the optional -tsv flag, or to a space with -psv. This flag must\n\
 be passed first.\n";
 
-enum class Mode { CORNERS, SSF, JOIN, BAG, REMOVE };
+enum class Mode { CORNERS, SSF, JOIN, BAG, REMOVE, ALTER, NEWTITLES };
 
 struct Arguments {
     Mode mode;
     int ignore_rows;         // only for corners mode
     int bag_size;            // only for wordbag mode
+    int col;                 // only for newtitles mode
     char delim;
     vector<string> strings;
 }; // Arguments
@@ -81,6 +92,13 @@ Arguments process_args(int argc, char *argv[]) {
     result.delim = DEFAULT_DELIM;
     for (int arg = 1; arg < argc; ++arg) {
         switch (argv[arg][1]) {
+            case 'a':
+                // alter mode, next 4 args are strings
+                result.mode = Mode::ALTER;
+                while (++arg < argc) result.strings.emplace_back(argv[arg]);
+                fail_if(result.strings.size() != 4);
+                break;
+                
             case 'c':
                 // corners mode, next arg must be a file name
                 result.mode = Mode::CORNERS;
@@ -105,6 +123,14 @@ Arguments process_args(int argc, char *argv[]) {
                 result.mode = Mode::JOIN;
                 while (++arg < argc) result.strings.emplace_back(argv[arg]);
                 fail_if(result.strings.size() != 3);
+                break;
+                
+            case 'n':
+                // newtitles mode, 3 filenames and one int
+                result.mode = Mode::NEWTITLES;
+                while (++arg < argc) result.strings.emplace_back(argv[arg]);
+                fail_if(result.strings.size() != 4);
+                result.col = atoi(result.strings.back().c_str());   // TODO: hacky
                 break;
                 
             case 'p':
@@ -165,6 +191,10 @@ int main(int argc, char *argv[]) {
     Arguments args = process_args(argc, argv);
 
     switch (args.mode) {
+        case Mode::ALTER:
+            subst_chars(args.strings[0], args.strings[1], args.strings[2], args.strings[3]);
+            break;
+        
         case Mode::CORNERS:
             print_corners(CORNER_SQUARE_SIZE, args.strings[0], args.delim, args.ignore_rows);
             break;
@@ -180,6 +210,10 @@ int main(int argc, char *argv[]) {
             joiner.join(args.strings[2]);
             break;
         }
+            
+        case Mode::NEWTITLES:
+            subst_title_col(args.strings[0], args.strings[1], args.strings[2], args.col, args.delim);
+            break;
 
         case Mode::BAG: {
             WordBagger bagger(args.strings[0], args.bag_size);

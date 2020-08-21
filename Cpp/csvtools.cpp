@@ -163,7 +163,7 @@ void print_corners(size_t num,
             exit(1);
         }
         // read ends of current row
-        string delim_str = "_";
+        string delim_str = "_"; // TODO: this is a hack
         delim_str[0] = delim;
         token = strtok(&(line[0]), delim_str.c_str());
         left.push_back(deque<string>());
@@ -209,3 +209,25 @@ void print_corners(size_t num,
     cout << "\nArray is " << row << " rows by " << width << " columns.\n";
 } // print_corners()
 
+
+/*
+ Replace the title column of a csv file with a given column from another file.
+ // TODO: don't require the substituted column to be the second one!!
+ */
+void subst_title_col(const std::string& infile,
+                     const std::string& outfile,
+                     const std::string& substfile,
+                     int col,
+                     char delim) {
+    string line, substline;
+    ifstream reader(infile), substreader(substfile);
+    ofstream writer(outfile);
+    while (getline(reader, line)) {
+        assert(col == 2);   // other values not yet supported :/
+        assert(getline(substreader, substline));
+        string title = substline.substr(substline.find(delim) + 1);
+        string data = line.substr(line.find(delim));
+        writer << title << data << '\n';
+    } // while
+    assert(!getline(substreader, substline));
+} // subst_title_col()
