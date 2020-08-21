@@ -14,7 +14,9 @@ import csv
 
 def ZIFApreprocessing(Y):
     """
-    Prepare scRNA-seq data matrix for ZIFA dimensionality reduction.
+    Prepare scRNA-seq data matrix for ZIFA dimensionality reduction. Note that 
+    the preprocessed data matrix must still be transposed for ZIFA to give a 
+    meaningful result.
 
     Parameters
     ----------
@@ -28,6 +30,7 @@ def ZIFApreprocessing(Y):
         log-transformed.
     
     """
+    print("Preprocessing data for ZIFA dimensionality reduction...")
     # remove zero cols
     N = Y.shape[0]
     n = 0

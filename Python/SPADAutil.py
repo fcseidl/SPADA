@@ -56,43 +56,6 @@ def maxSilhouetteClusters(X, algorithm, max_n_clusters=10):
             score_best = score
     print(n_clusters, "clusters chosen to maximize average silhouette score")
     return n_clusters, labels_best
-
-
-def bestSilhouetteKMeans(X, max_n_clusters=10):
-    """
-    Perform k-means clustering using average silhouette method to determine 
-    optimal number of clusters.
-
-    Parameters
-    ----------
-    X : array, (n_samples, n_features)
-        Data matrix.
-    max_n_clusters : int, optional
-        Maximum number of clusters to try.
-
-    Returns
-    -------
-    n_clusters : int
-        Number of clusters used.
-    cluster_centers : array, shape (n_clusters, n_features)
-        Coordinates of cluster centers.
-    labels : array, shape (n_samples,)
-        Labels of each point.
-    
-    """
-    centers = labels = []
-    k_best = 1
-    score_best = -1
-    for k in range(2, max_n_clusters):
-        kmeans = KMeans(n_clusters=k).fit(X)
-        score = silhouette_score(X, kmeans.labels_)
-        if score > score_best:
-            k_best = k
-            score_best = score
-            centers = kmeans.cluster_centers_
-            labels = kmeans.labels_
-    print(k_best, "clusters chosen to maximize average silhouette score")
-    return k_best, centers, labels
     
 
 def dropoutRate(Yn):

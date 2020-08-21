@@ -5,7 +5,7 @@ Created on Sat Jul  4 16:07:51 2020
 
 @author: fcseidl
 
-This module contains various tests.
+This driver module contains code to run tests and generate visualizations.
 """
 
 import numpy as np
@@ -22,7 +22,7 @@ import preprocessing
 import simulations as sims
 import RelatednessTesting as rt
 import SPADAutil as util
-
+    
 
 # CH relatedness testing on real datasets
 if 1:
@@ -40,25 +40,28 @@ if 1:
     A, B = preprocessing.removeRowsPred(A, B, sparse)
     B, A = preprocessing.removeRowsPred(B, A, sparse)
     
-    print("Applying cosine normalization to samples...")
+    print("Choosing random subset of samples from both datasets...")
     L = 100
     A = np.random.permutation(A)
     B = np.random.permutation(B)
     A = A[:, :L]
     B = B[:, :L]
+    
+    print("Applying cosine normalization to samples...")
     A = normalize(A)
     B = normalize(B)
+    joint = np.concatenate((A, B), axis=1) # joint data matrix
     
     print("Performing CH testing...")
     
     print("KMeans clustering, determining number of clusters with average silhouette method:")
-    n_clust = 8
-    AB = np.concatenate((A, B), axis=1) # joint data matrix
-    n_clust, labels = util.maxSilhouetteClusters(AB.T, util.kMeansClustering)
-    clusterer = lambda X : (n_clust, labels)
+    n_clust = 3
+    #n_clust, labels = util.maxSilhouetteClusters(AB.T, util.kMeansClustering)
+    #clusterer = lambda X : (n_clust, labels)
     clusterer = lambda X : (n_clust, util.kMeansClustering(X, n_clust))
     rt.clusterHeterogeneity(A, B, clusterer)
     
+    '''
     print("Linear sparse subspace clustering:")
     clusterer = lambda X : (n_clust, sparseSubspaceClustering(X, n_clust, OptM="L1Noise")[0])
     rt.clusterHeterogeneity(A, B, clusterer)
@@ -66,8 +69,18 @@ if 1:
     print("Affine sparse subspace clustering:")
     clusterer = lambda X : (n_clust, sparseSubspaceClustering(X, n_clust, affine=True, OptM="L1Noise")[0])
     rt.clusterHeterogeneity(A, B, clusterer)
+    '''
     
-
+    print("KMeans after ZIFA dimensionality reduction:")
+    n_dim = 10
+    joint = preprocessing.ZIFApreprocessing(joint)
+    joint, _ = block_ZIFA.fitModel(joint.T, n_dim)
+    joint = joint.T
+    A = joint[:, :L]
+    B = joint[:, L:]
+    clusterer = lambda X : (n_clust, util.kMeansClustering(X, n_clust))
+    rt.clusterHeterogeneity(A, B, clusterer)
+    
 # CH relatedness testing on simulated scRNA-seq datasets
 if 0:
     n_genes = 273
@@ -124,7 +137,6 @@ if 0:
     print("\nCH on Y1 and Y3 (expect low heterogeneity):")
     rt.clusterHeterogeneity(Y1, Y3, clusterer)
     
-
 # hypothesis testing with 2 real datasets
 if 0:
     np.random.seed(0)
