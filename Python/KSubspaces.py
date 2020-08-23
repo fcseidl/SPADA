@@ -41,9 +41,9 @@ def assignment_step(X, bases, origins):
     
     for x in X: # for each datapoint
         lbl = 0
-        residual = np.linalg.lstsq(bases[0].T, x - origins[0])[1]
+        residual = np.linalg.lstsq(bases[0].T, x - origins[0], rcond=None)[1]
         for i in range(1, k):   # for each subspace
-            res = np.linalg.lstsq(bases[i].T, x - origins[i])[1]
+            res = np.linalg.lstsq(bases[i].T, x - origins[i], rcond=None)[1]
             if res < residual:
                 residual = res
                 lbl = i

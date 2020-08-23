@@ -92,19 +92,18 @@ def SSC_test():
     
     # generating data
 
-    D = 30  # Dimension of ambient space
-    n = 2  # Number of subspaces
-    d = 2
-    N1 = 50
-    N2 = 50  # N1 and N2: number of points in subspace 1 and 2
-    # Generating N1 points in a d dim. subspace
-    X1 = np.random.randn(D, d) * np.random.randn(d, N1)
-    # Generating N2 points in a d dim. subspace
-    X2 = np.random.randn(D, d) * np.random.randn(d, N2)
-    X = np.concatenate((X1, X2), axis=1)
+    D = 40  # Dimension of ambient space
+    k = 4  # Number of subspaces
+    d = 9
+    N = 90  # Number of points in subspaces
+    # Generating N points in d dim. subspaces
+    Xi = [np.random.randn(D, d).dot(np.random.randn(d, N))
+          for _ in range(k)]
+    X = np.concatenate(Xi, axis=1)
 
     # Generating the ground-truth for evaluating clustering results
-    s = np.concatenate((1 * np.ones([1, N1]), 2 * np.ones([1, N2])), axis=1)
+    lbls = [i * np.ones([1, N]) for i in range(k)]
+    s = np.concatenate(lbls, axis=1)
     r = 0  # Enter the projection dimension e.g. r = d*n, enter r = 0 to not project
     Cst = 0  # Enter 1 to use the additional affine constraint sum(c) == 1
     OptM = 'L1Noise'  # OptM can be {'L1Perfect','L1Noise','Lasso','L1ED'}
@@ -146,7 +145,7 @@ def SSC_test():
         print("Something failed")
     '''
     
-    labels, _, __ = KSubspaces(Xp.T, n, d)
+    labels, _, __ = KSubspaces(Xp.T, k, d)
     labels = BestMap(s, labels)
     Missrate = float(np.sum(s != labels)) / s.size
     print("\n\nMisclassification rate: {:.4f} %\n\n".format(Missrate * 100))
