@@ -19,6 +19,8 @@ from BestMap import BestMap
 from SpectralClustering import SpectralClustering
 from SparseCoefRecovery import SparseCoefRecovery
 
+from KSubspaces import KSubspaces
+
 
 def sparseSubspaceClustering(
         X, n_clusters=8, ground_truth=None, remove_outliers=False, affine=False, OptM='Lasso', lam=1e-2):
@@ -92,14 +94,13 @@ def SSC_test():
 
     D = 30  # Dimension of ambient space
     n = 2  # Number of subspaces
-    d1 = 1
-    d2 = 1  # d1 and d2: dimension of subspace 1 and 2
+    d = 2
     N1 = 50
     N2 = 50  # N1 and N2: number of points in subspace 1 and 2
-    # Generating N1 points in a d1 dim. subspace
-    X1 = np.random.randn(D, d1) * np.random.randn(d1, N1)
-    # Generating N2 points in a d2 dim. subspace
-    X2 = np.random.randn(D, d2) * np.random.randn(d2, N2)
+    # Generating N1 points in a d dim. subspace
+    X1 = np.random.randn(D, d) * np.random.randn(d, N1)
+    # Generating N2 points in a d dim. subspace
+    X2 = np.random.randn(D, d) * np.random.randn(d, N2)
     X = np.concatenate((X1, X2), axis=1)
 
     # Generating the ground-truth for evaluating clustering results
@@ -111,7 +112,7 @@ def SSC_test():
     # Number of top coefficients to build the similarity graph, enter K=0 for using the whole coefficients
     K = 0 #max(d1, d2)
     if Cst == 1:
-        K = max(d1, d2) + 1  # For affine subspaces, the number of coefficients to pick is dimension + 1
+        K = d + 1  # For affine subspaces, the number of coefficients to pick is dimension + 1
 
     Xp = DataProjection(X, r, 'NormalProj')
     
@@ -126,6 +127,7 @@ def SSC_test():
     print("\n\nMisclassification rate: {:.4f} %\n\n".format(Missrate * 100))
     '''
     
+    '''
     # calling internal tools
     CMat = SparseCoefRecovery(Xp, Cst, OptM, lmbda)
     # Make small values 0
@@ -142,7 +144,12 @@ def SSC_test():
         print("\n\nMisclassification rate: {:.4f} %\n\n".format(Missrate * 100))
     else:
         print("Something failed")
-
+    '''
+    
+    labels, _, __ = KSubspaces(Xp.T, n, d)
+    labels = BestMap(s, labels)
+    Missrate = float(np.sum(s != labels)) / s.size
+    print("\n\nMisclassification rate: {:.4f} %\n\n".format(Missrate * 100))
 
 if __name__ == "__main__":
     SSC_test()

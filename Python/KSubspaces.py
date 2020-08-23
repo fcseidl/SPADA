@@ -41,16 +41,16 @@ def assignment_step(X, bases, origins):
     
     for x in X: # for each datapoint
         lbl = 0
-        residual = np.linalg.lstsq(bases[0], x - origins[0])
+        residual = np.linalg.lstsq(bases[0].T, x - origins[0])[1]
         for i in range(1, k):   # for each subspace
-            res = np.linalg.lstsq(bases[i], x - origins[i]).residuals[0]
+            res = np.linalg.lstsq(bases[i].T, x - origins[i])[1]
             if res < residual:
                 residual = res
                 lbl = i
         labels.append(lbl)
         tot_res += residual
         
-    return tot_res, labels
+    return tot_res, np.array(labels)
 
 
 def update_step(X, k, d, labels):
@@ -82,11 +82,15 @@ def update_step(X, k, d, labels):
     origins = []
     
     for i in range(k):
-        idxs = np.argwhere(labels == i)  # indices of cluster k
-        cluster = X[idxs]
-        pca = PCA(n_components=d).fit(cluster)
-        bases.append(pca.components_)
-        origins.append(pca.mean_)
+        idxs = np.argwhere(labels == i).flatten()  # indices of cluster k
+        if len(set(idxs)) != 0:
+            cluster = X[idxs]
+            pca = PCA(n_components=d).fit(cluster)
+            bases.append(pca.components_)
+            origins.append(pca.mean_)
+        else:
+            bases.append(np.zeros(d, n_feat))
+            origins.append(np.zeros(n_feat))
     
     return np.array(bases), np.array(origins)
             
@@ -122,19 +126,19 @@ def KSubspaces(X, k, d, max_iter=1000, n_restarts=10):
     n_samp, n_feat = X.shape
     
     # check for bad input
-    assert(k > 2)
+    assert(k >= 2)
     assert(0 <= d and (d + 1) * k < n_samp)
     
     res_best = sum([ np.linalg.norm(x) for x in X ])
     labels_best = bases_best = origins_best = None
     
     for _ in range(n_restarts):
-        res, labels = np.random.randint(k, size=n_samp) # initialize
+        labels = np.random.randint(k, size=n_samp) # initialize
         labels_prev = labels
         for it in range(max_iter):
             bases, origins = update_step(X, k, d, labels)
             res, labels = assignment_step(X, bases, origins)
-            if labels == labels_prev:   # converged
+            if (labels == labels_prev).all():   # converged
                 break
             labels_prev = labels
         if res < res_best:
