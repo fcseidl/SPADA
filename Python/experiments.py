@@ -5,7 +5,7 @@ Created on Wed Jun 17 21:57:40 2020
 
 @author: fcseidl
 
-Functions to generate data and visualizations for tech report.
+Generate data and visualizations for tech report.
 """
 
 import numpy as np
@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 
 from BestMap import BestMap
 from SSC import sparseSubspaceClustering
+from KSubspaces import KSubspaces
 
 import preprocessing
 import simulations as sims
@@ -22,40 +23,105 @@ import RelatednessTesting as rt
 import SPADAutil as util
 
 
+# data--note that paths are local and will not work on other machines
+print("Loading Chen data matrix...")
+chen = preprocessing.csvToMatrix(
+    "/Users/fcseidl/Documents/SPADA/RNAseq/mouse_brain/ssf_chen.tsv", 
+    delim='\t')
+
+print("Loading Campbell data matrix...")
+campbell = preprocessing.csvToMatrix(
+    "/Users/fcseidl/Documents/SPADA/RNAseq/mouse_brain/ssf_campbell.tsv", 
+    delim='\t')
+
+print("Loading Segerstolpe data matrix...")
+seger = np.genfromtxt(
+    "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/ssf_segerstolpe.tsv", 
+    delimiter='\t')
+seger = seger[1:, 2:]
+
+print("Loading Xin data matrix...")
+xin = np.genfromtxt(
+    "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/ssf_xin.tsv", 
+    delimiter='\t')
+xin = xin[1:, 1:]
+
+# load cell labels
+print("Loading Segerstolpe labels...")
+s_lbl = np.genfromtxt(
+    "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/Segerstolpe/labels.tsv", 
+    delimiter='\t', dtype=str)
+s_lbl = s_lbl[1:, -1].astype(str)
+
+print("Loading Xin labels...")
+x_lbl = np.genfromtxt(
+    "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/Xin/labels.tsv", 
+    delimiter='\t', dtype=str)
+x_lbl = x_lbl[1:, -1].astype(str)
+
+
+# preprocessing
+print("Chen and Campbell preprocessing:")
+print("Removing sparse genes from chen and campbell...")
+def sparse(Yn):
+    return util.dropoutRate(Yn) > 0.8
+chen, campbell = preprocessing.removeRowsPred(chen, campbell, sparse)
+campbell, chen = preprocessing.removeRowsPred(campbell, chen, sparse)
+
+print("Randomly choosing subset of data...")
+L = 500
+ch_idx = np.random.permutation(np.arange(chen.shape[1]))[:L]
+ca_idx = np.random.permutation(np.arange(campbell.shape[1]))[:L]
+chen = chen[:, ch_idx]
+campbell = campbell[:, ca_idx]
+
+print("Applying cosine normalization to samples...")
+chen = normalize(chen)
+campbell = normalize(campbell)
+
+print("Segerstolpe and Xin preprocessing:")
+
+s_types = ["alpha cell", "beta cell", "delta cell", "gamma cell"]
+x_types = ["alpha", "beta", "delta", "PP"]
+
+print("Removing additional cell types...")
+remove = []
+for i in range(seger.shape[1]):
+    if s_lbl[i] not in s_types:
+        remove.append(i)
+seger = np.delete(seger, remove, axis=1)
+s_lbl = np.delete(s_lbl, remove)
+
+remove = []
+for i in range(xin.shape[1]):
+    if x_lbl[i] not in x_types:
+        remove.append(i)
+xin = np.delete(xin, remove, axis=1)
+x_lbl = np.delete(x_lbl, remove)
+
+print("Removing sparse genes from both datasets...")
+def sparse(Yn):
+    return util.dropoutRate(Yn) > 0.7
+seger, xin = preprocessing.removeRowsPred(seger, xin, sparse)
+xin, seger = preprocessing.removeRowsPred(xin, seger, sparse)
+
+print("Randomly choosing subset of data...")
+L = 500
+s_idx = np.random.permutation(np.arange(seger.shape[1]))[:L]
+seger = seger[:, s_idx]
+s_lbl = s_lbl[s_idx]
+x_idx = np.random.permutation(np.arange(xin.shape[1]))[:L]
+xin = xin[:, x_idx]
+x_lbl = x_lbl[x_idx]
+
+print("Applying cosine normalization to samples...")
+seger = normalize(seger)
+xin = normalize(xin)
+
+
+
 def mouse_hypothalamus(clusterer):
-    n_clusters = [2, 5, 10, 20] # various numbers of clusters to use
-    
-    print("Loading Chen data matrix...")
-    chen = preprocessing.csvToMatrix(
-        "/Users/fcseidl/Documents/SPADA/RNAseq/mouse_brain/ssf_chen.tsv", 
-        delim='\t')
-    
-    print("Loading Campbell data matrix...")
-    campbell = preprocessing.csvToMatrix(
-        "/Users/fcseidl/Documents/SPADA/RNAseq/mouse_brain/ssf_campbell.tsv", 
-        delim='\t')
-    
-    '''
-    _, chen = sims.simulateJointData()
-    _, campbell = sims.simulateJointData()
-    '''
-     
-    print("Removing sparse genes from both datasets...")
-    def sparse(Yn):
-        return util.dropoutRate(Yn) > 0.8
-    chen, campbell = preprocessing.removeRowsPred(chen, campbell, sparse)
-    campbell, chen = preprocessing.removeRowsPred(campbell, chen, sparse)
-    
-    print("Randomly choosing subset of data...")
-    L = 500
-    chen = np.random.permutation(chen.T).T
-    campbell = np.random.permutation(campbell.T).T
-    chen = chen[:, :L]
-    campbell = campbell[:, :L]
-    
-    print("Applying cosine normalization to samples...")
-    chen = normalize(chen)
-    campbell = normalize(campbell)
+    n_clusters = [2, 5, 10] # various numbers of clusters to use
     
     for k in n_clusters:
         print("Using", k, "clusters...")
@@ -89,10 +155,10 @@ def mouse_hypothalamus(clusterer):
         
         index = np.arange(k)
         ticks = np.arange(k)
-        width = 0.35
+        width = 0.4
         y_offset = np.zeros(k)
         
-        plt.bar(index + width, joint_distribution, width, label=("joint"))
+        #plt.bar(index + width, joint_distribution, width, label=("joint"))
         
         for c in range(k):
             plt.bar(index, chen_distribution[c], width, bottom=y_offset, 
@@ -112,70 +178,6 @@ def mouse_hypothalamus(clusterer):
 
 def human_pancreatic_islets(clusterer):
     n_clusters = [4, 10] # various numbers of clusters to use
-    s_types = ["alpha cell", "beta cell", "delta cell", "gamma cell"]
-    x_types = ["alpha", "beta", "delta", "PP"]
-    
-    # load data matrices
-    print("Loading Segerstolpe data matrix...")
-    seger = np.genfromtxt(
-        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/ssf_segerstolpe.tsv", 
-        delimiter='\t')
-    seger = seger[1:, 2:]
-    
-    print("Loading Xin data matrix...")
-    xin = np.genfromtxt(
-        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/ssf_xin.tsv", 
-        delimiter='\t')
-    xin = xin[1:, 1:]
-    
-    # load cell labels
-    print("Loading Segerstolpe labels...")
-    s_lbl = np.genfromtxt(
-        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/Segerstolpe/labels.tsv", 
-        delimiter='\t', dtype=str)
-    s_lbl = s_lbl[1:, -1].astype(str)
-    
-    print("Loading Xin labels...")
-    x_lbl = np.genfromtxt(
-        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/Xin/labels.tsv", 
-        delimiter='\t', dtype=str)
-    x_lbl = x_lbl[1:, -1].astype(str)
-    
-    print("Removing additional cell types...")
-    remove = []
-    for i in range(seger.shape[1]):
-        if s_lbl[i] not in s_types:
-            remove.append(i)
-    seger = np.delete(seger, remove, axis=1)
-    s_lbl = np.delete(s_lbl, remove)
-    
-    remove = []
-    for i in range(xin.shape[1]):
-        if x_lbl[i] not in x_types:
-            remove.append(i)
-    xin = np.delete(xin, remove, axis=1)
-    x_lbl = np.delete(x_lbl, remove)
-    
-    print("Removing sparse genes from both datasets...")
-    def sparse(Yn):
-        return util.dropoutRate(Yn) > 0.7
-    seger, xin = preprocessing.removeRowsPred(seger, xin, sparse)
-    xin, seger = preprocessing.removeRowsPred(xin, seger, sparse)
-    
-    print("Randomly choosing subset of data...")
-    L = 500
-    indices = np.arange(seger.shape[1])
-    s_idx = np.random.permutation(indices)[:L]
-    seger = seger[:, s_idx]
-    s_lbl = s_lbl[s_idx]
-    indices = np.arange(xin.shape[1])
-    x_idx = np.random.permutation(indices)[:L]
-    xin = xin[:, x_idx]
-    x_lbl = x_lbl[x_idx]
-    
-    print("Applying cosine normalization to samples...")
-    seger = normalize(seger)
-    xin = normalize(xin)
     
     for k in n_clusters:
         print("Clustering both datasets together into", k, "clusters...")
@@ -217,10 +219,37 @@ def human_pancreatic_islets(clusterer):
         plt.legend(loc='best')
         plt.show()
         
+        
+# algorithms
+kmeans = util.kMeansClustering
+lSSC = sparseSubspaceClustering
+aSSC = lambda X, k : sparseSubspaceClustering(X, k, affine=True)
+ksubspaces = KSubspaces
 
-if __name__ == "__main__":
-    #mouse_hypothalamus(sparseSubspaceClustering)
-    mouse_hypothalamus(util.kMeansClustering)
-    h#uman_pancreatic_islets(util.kMeansClustering)
+
+# collect results
+print("\n\n--------------------k-means on mice data-------------------------")
+mouse_hypothalamus(kmeans)
+
+print("\n\n------------------linear SSC on mice data------------------------")
+mouse_hypothalamus(lSSC)
+
+print("\n\n------------------affine SSC on mice data------------------------")
+mouse_hypothalamus(aSSC)
+
+print("\n\n------------------k-subspaces on mice data-----------------------")
+mouse_hypothalamus(ksubspaces)
+
+print("\n\n------------------k-means on pancreas data-----------------------")
+human_pancreatic_islets(kmeans)
+
+print("\n\n----------------linear SSC on pancreas data----------------------")
+human_pancreatic_islets(lSSC)
+
+print("\n\n----------------affine SSC on pancreas data----------------------")
+human_pancreatic_islets(aSSC)
+
+print("\n\n----------------k-subspaces on pancreas data---------------------")
+human_pancreatic_islets(ksubspaces)
     
     

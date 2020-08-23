@@ -94,7 +94,7 @@ def SSC_test():
 
     D = 40  # Dimension of ambient space
     k = 4  # Number of subspaces
-    d = 9
+    d = 1
     N = 90  # Number of points in subspaces
     # Generating N points in d dim. subspaces
     Xi = [np.random.randn(D, d).dot(np.random.randn(d, N))

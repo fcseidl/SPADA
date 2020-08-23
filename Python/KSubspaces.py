@@ -41,9 +41,9 @@ def assignment_step(X, bases, origins):
     
     for x in X: # for each datapoint
         lbl = 0
-        residual = np.linalg.lstsq(bases[0].T, x - origins[0], rcond=None)[1]
+        residual = np.linalg.lstsq(bases[0].T, x - origins[0], rcond=None)[1][0]
         for i in range(1, k):   # for each subspace
-            res = np.linalg.lstsq(bases[i].T, x - origins[i], rcond=None)[1]
+            res = np.linalg.lstsq(bases[i].T, x - origins[i], rcond=None)[1][0]
             if res < residual:
                 residual = res
                 lbl = i
@@ -83,7 +83,7 @@ def update_step(X, k, d, labels):
     
     for i in range(k):
         idxs = np.argwhere(labels == i).flatten()  # indices of cluster k
-        if len(set(idxs)) != 0:
+        if idxs.shape[0]:
             cluster = X[idxs]
             pca = PCA(n_components=d).fit(cluster)
             bases.append(pca.components_)
@@ -107,7 +107,8 @@ def KSubspaces(X, k, d, max_iter=1000, n_restarts=10):
     k : int
         Number of clusters. Must be >= 2.
     d : int
-        Dimension of subspaces. Must satisfy 0 <= (d + 1) * k < n_samples.
+        Dimension of subspaces. Must satisfy 0 < (d + 1) * k < n_samples.
+        If you'd like to use d = 0, simply perform k-means clustering instead.
     max_iter : int, optional
         Maximum number of iterations per restart. The default is 1000.
     n_restarts : int, optional
@@ -127,7 +128,7 @@ def KSubspaces(X, k, d, max_iter=1000, n_restarts=10):
     
     # check for bad input
     assert(k >= 2)
-    assert(0 <= d and (d + 1) * k < n_samp)
+    assert(0 < d and (d + 1) * k < n_samp)
     
     res_best = sum([ np.linalg.norm(x) for x in X ])
     labels_best = bases_best = origins_best = None
