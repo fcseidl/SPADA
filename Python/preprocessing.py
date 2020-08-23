@@ -66,7 +66,8 @@ def csvToMatrix(filename, delim=','):
 
     Returns
     -------
-    A 2d numpy array containing (unlabeled) data from file.
+    A 2d numpy float array containing data from file, with no title row or 
+    column.
     
     """
     with open(filename) as readfile:
@@ -74,6 +75,28 @@ def csvToMatrix(filename, delim=','):
         result = np.array([ row for row in read_csv ])
     result = result[1:, 1:]
     result = result.astype(np.float)
+    return result
+
+
+def csvToNumpy(filename, delim=','):
+    """
+    Read a rectangular csv file into a numpy array.
+
+    Parameters
+    ----------
+    filename : string
+        name of csv file
+    delim : character, optional
+        delimiting character, comma by default
+
+    Returns
+    -------
+    A 2d numpy string array containing file data.
+
+    """
+    with open(filename) as readfile:
+        read_csv = csv.reader(readfile, delimiter=delim)
+        result = np.array([ row for row in read_csv ])
     return result
 
 

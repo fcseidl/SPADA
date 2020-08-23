@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 22 16:10:20 2020
+
+@author: fcseidl
+
+k-subspaces clustering algorithm generalizes k-means to cluster points near 
+hyperplanes rather than centroids.
+"""
+
+import numpy as np
+
+
+def initialization(X, k, d, affine):
+    """
+    Generate random initial conditions for iterative k-subspaces algorithm.
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features)
+        Data matrix.
+    k : int
+        Number of clusters. Must be >= 2.
+    d : int
+        Dimension of subspaces. Must satisfy 0 <= (d + 1) * k < n_samples if 
+        affine is True, and 1 <= d * k < n_samples if affine is False.
+    affine : bool
+        Whether subspaces are affine.
+
+    Returns
+    -------
+    bases : array, shape (k, d, n_features)
+        The rows of bases[i] are an orthogonal basis for the ith subspace.
+    origins : array, shape (k, n_features)
+        Only returned if affine=True. origins[i] is the projection of the 
+        origin onto the ith subspace.
+
+    """
+    n_samp, n_feat = X.shape
+    # get bases
+    for i in range(k):
+        points = np.random.permutation(X)
+            
+
+
+def assignment_step(X, bases, origins=None):
+    """
+    Assign each datapoint to the nearest subspace defined by the given bases
+    (and, in the case of affine subspaces, origins).
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features)
+        Data matrix, assignment is performed on rows.
+    bases : array, shape (k, d, n_features)
+        The rows of bases[i] are an orthogonal basis for the ith subspace.
+    origins : array, shape (k, n_features), optional
+        If subspaces are affine, then origins[i] is the projection of the 
+        origin onto the ith subspace. Do not provide this parameter with 
+        linear spaces.
+
+    Returns
+    -------
+    labels : array, shape (n_samples,)
+        Clustering labels of each sample, in [0, k).
+
+    """
+    labels = []
+    k, d, n_feat = bases.shape
+    if origins is None:
+        origins = np.zeros((d, n_feat)) # linear subspaces
+    
+    for x in X: # for each datapoint
+        lbl = 0
+        residual = np.linalg.lstsq(bases[0], x - origins[0])
+        for i in range(1, k):   # for each subspace
+            res = np.linalg.lstsq(bases[i], x - origins[i]).residuals[0]
+            if res < residual:
+                residual = res
+                lbl = i
+        labels.append(lbl)
+        
+    return labels
+            
+
+def KSubspaces(X, k, d, max_iter=1000, n_restarts=10, affine=True):
+    """
+    Perform k-subspaces clustering, a generalization of k-means. 
+    Initialization subspaces are chosen to contain random groups of points.
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features)
+        Data matrix, clustering is performed on rows.
+    k : int
+        Number of clusters. Must be >= 2.
+    d : int
+        Dimension of subspaces. Must satisfy 0 <= (d + 1) * k < n_samples. If 
+        affine is False, then d must be positive.
+    max_iter : int, optional
+        Maximum number of iterations per restart. The default is 1000.
+    n_restarts : int, optional
+        Number of times to restart the algorithm with new initial conditions.
+    affine : bool, optional
+        Whether or not to use affine subspaces. The default is True. Note that 
+        k-subspaces with affine=True, d=0 is simply k-means.
+
+    Returns
+    -------
+    labels : array, shape (n_samples,)
+        Clustering labels of each sample, in [0, k).
+    bases : array, shape (k, d, n_features)
+        The rows of bases[i] are an orthogonal basis for the ith subspace.
+    origins : array, shape (k, n_features)
+        Only returned if affine=True. origins[i] is the projection of the 
+        origin onto the ith subspace.
+
+    """
+    # check for bad input
+    assert(k > 2)
+    if d == 0:
+        assert(affine)
+    else:
+        assert(d > 0)
+    assert(d * k < X.shape[0])
+    
+    # 

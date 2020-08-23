@@ -22,7 +22,7 @@ import RelatednessTesting as rt
 import SPADAutil as util
 
 
-def mouse_brain_test(clusterer):
+def mouse_hypothalamus(clusterer):
     n_clusters = [2, 5, 10, 20] # various numbers of clusters to use
     
     print("Loading Chen data matrix...")
@@ -47,9 +47,9 @@ def mouse_brain_test(clusterer):
     campbell, chen = preprocessing.removeRowsPred(campbell, chen, sparse)
     
     print("Randomly choosing subset of data...")
-    L = 120
-    chen = np.random.permutation(chen)
-    campbell = np.random.permutation(campbell)
+    L = 500
+    chen = np.random.permutation(chen.T).T
+    campbell = np.random.permutation(campbell.T).T
     chen = chen[:, :L]
     campbell = campbell[:, :L]
     
@@ -87,24 +87,6 @@ def mouse_brain_test(clusterer):
             campbell_distribution[int(c)][int(j)] += 1
             joint_distribution[j] += 1
         
-        '''
-        fig, ax = plt.subplots()
-        
-        size = 0.3
-        cmap = plt.get_cmap("tab20c")
-        #outer_colors = cmap(np.arange(k))
-        #inner_colors = np.concatenate([ outer_colors for _ in range(k) ])
-        
-        ax.pie(joint_distribution, radius=1, #colors=outer_colors,
-               wedgeprops=dict(width=size, edgecolor='w'))
-        
-        ax.pie(joint_distribution.flatten(), radius=1-size, #colors=inner_colors,
-               wedgeprops=dict(width=size, edgecolor='w'))
-        
-        ax.set(aspect="equal", title='cluster composition')
-        plt.show()
-        '''
-        
         index = np.arange(k)
         ticks = np.arange(k)
         width = 0.35
@@ -120,7 +102,7 @@ def mouse_brain_test(clusterer):
                     label=("campbell %d" % c))
             y_offset += campbell_distribution[c]
             
-        plt.ylabel('number of points from dataset')
+        plt.ylabel('number of points')
         plt.xlabel('joint cluster')
         plt.title('Cluster Composition')
         plt.xticks(index + width / 2, ticks)
@@ -128,8 +110,117 @@ def mouse_brain_test(clusterer):
         plt.show()
         
 
+def human_pancreatic_islets(clusterer):
+    n_clusters = [4, 10] # various numbers of clusters to use
+    s_types = ["alpha cell", "beta cell", "delta cell", "gamma cell"]
+    x_types = ["alpha", "beta", "delta", "PP"]
+    
+    # load data matrices
+    print("Loading Segerstolpe data matrix...")
+    seger = np.genfromtxt(
+        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/ssf_segerstolpe.tsv", 
+        delimiter='\t')
+    seger = seger[1:, 2:]
+    
+    print("Loading Xin data matrix...")
+    xin = np.genfromtxt(
+        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/ssf_xin.tsv", 
+        delimiter='\t')
+    xin = xin[1:, 1:]
+    
+    # load cell labels
+    print("Loading Segerstolpe labels...")
+    s_lbl = np.genfromtxt(
+        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/Segerstolpe/labels.tsv", 
+        delimiter='\t', dtype=str)
+    s_lbl = s_lbl[1:, -1].astype(str)
+    
+    print("Loading Xin labels...")
+    x_lbl = np.genfromtxt(
+        "/Users/fcseidl/Documents/SPADA/RNAseq/human_pancreas/Xin/labels.tsv", 
+        delimiter='\t', dtype=str)
+    x_lbl = x_lbl[1:, -1].astype(str)
+    
+    print("Removing additional cell types...")
+    remove = []
+    for i in range(seger.shape[1]):
+        if s_lbl[i] not in s_types:
+            remove.append(i)
+    seger = np.delete(seger, remove, axis=1)
+    s_lbl = np.delete(s_lbl, remove)
+    
+    remove = []
+    for i in range(xin.shape[1]):
+        if x_lbl[i] not in x_types:
+            remove.append(i)
+    xin = np.delete(xin, remove, axis=1)
+    x_lbl = np.delete(x_lbl, remove)
+    
+    print("Removing sparse genes from both datasets...")
+    def sparse(Yn):
+        return util.dropoutRate(Yn) > 0.7
+    seger, xin = preprocessing.removeRowsPred(seger, xin, sparse)
+    xin, seger = preprocessing.removeRowsPred(xin, seger, sparse)
+    
+    print("Randomly choosing subset of data...")
+    L = 500
+    indices = np.arange(seger.shape[1])
+    s_idx = np.random.permutation(indices)[:L]
+    seger = seger[:, s_idx]
+    s_lbl = s_lbl[s_idx]
+    indices = np.arange(xin.shape[1])
+    x_idx = np.random.permutation(indices)[:L]
+    xin = xin[:, x_idx]
+    x_lbl = x_lbl[x_idx]
+    
+    print("Applying cosine normalization to samples...")
+    seger = normalize(seger)
+    xin = normalize(xin)
+    
+    for k in n_clusters:
+        print("Clustering both datasets together into", k, "clusters...")
+        joint = np.concatenate((seger, xin), axis=1)
+        lbl = clusterer(joint.T, k)
+        
+        print("NMI between Segerstolpe true and predicted labels =",
+              normalized_mutual_info_score(s_lbl, lbl[:L]))
+        
+        print("NMI between Xin true and predicted labels =",
+              normalized_mutual_info_score(x_lbl, lbl[L:])) 
+        
+        print("Plotting cluster composition bar chart...")
+        dist = np.zeros((k, 4))
+        for i in range(L):
+            # Segerstolpe data
+            predicted = lbl[i]
+            truth = s_lbl[i]
+            dist[predicted, s_types.index(truth)] += 1
+            # Xin data
+            predicted = lbl[L + i]
+            truth = x_lbl[i]
+            dist[predicted, x_types.index(truth)] += 1
+        
+        index = np.arange(k)
+        ticks = np.arange(k)
+        width = 0.4
+        y_offset = np.zeros(k)
+        
+        for j in range(4):
+            plt.bar(index, dist[:, j], width, bottom=y_offset, 
+                    label=x_types[j])
+            y_offset += dist[:, j]
+            
+        plt.ylabel('number of points')
+        plt.xlabel('cluster')
+        plt.title('Cluster Composition')
+        plt.xticks(index + width / 2, ticks)
+        plt.legend(loc='best')
+        plt.show()
+        
+
 if __name__ == "__main__":
-    mouse_brain_test(sparseSubspaceClustering)
-    #mouse_brain_test(util.kMeansClustering)
+    #mouse_hypothalamus(sparseSubspaceClustering)
+    mouse_hypothalamus(util.kMeansClustering)
+    h#uman_pancreatic_islets(util.kMeansClustering)
     
     
